@@ -1,7 +1,7 @@
 package com.sonnhuynhh.shopnest.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
+        import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "products")  // Chỉ định tên bảng rõ ràng
+@Table(name = "products")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +19,9 @@ public class Product {
     @NotNull(message = "Name cannot be null")
     @Size(max = 255, message = "Name must be less than 255 characters")
     private String name;
+
+    @Column(unique = true, length = 255)
+    private String slug;
 
     @Min(value = 0, message = "Price must be non-negative")
     private BigDecimal price;
@@ -29,12 +32,12 @@ public class Product {
     @Column(length = 1000)
     private String description;
 
-    private LocalDate expirationDate;  // Hạn sử dụng
+    private LocalDate expirationDate;
 
-    private LocalDate importDate;  // Ngày nhập
+    private LocalDate importDate;
 
     @Column(length = 255)
-    private String imageUrl;  // URL hình ảnh
+    private String imageUrl;
 
     @Size(max = 100)
     private String category;
@@ -42,19 +45,19 @@ public class Product {
     @Size(max = 100)
     private String brand;
 
-    private Double rating;  // Đánh giá trung bình
+    private Double rating;
 
     @Column(updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();  // Ngày tạo
+    private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt = LocalDateTime.now();  // Ngày cập nhật
+    private LocalDateTime updatedAt;
 
-    // Constructors
     public Product() {}
 
     public Product(String name, BigDecimal price, int stock, String description, LocalDate expirationDate,
                    LocalDate importDate, String imageUrl, String category, String brand, Double rating) {
         this.name = name;
+        this.slug = generateSlug(name);
         this.price = price;
         this.stock = stock;
         this.description = description;
@@ -66,12 +69,35 @@ public class Product {
         this.rating = rating;
     }
 
-    // Getters & Setters
+    private String generateSlug(String name) {
+        if (name == null) return null;
+        return name.toLowerCase()
+                .replaceAll("\\s+", "-")
+                .replaceAll("[àáạảãâầấậẩẫăằắặẳẵ]", "a")
+                .replaceAll("[èéẹẻẽêềếệểễ]", "e")
+                .replaceAll("[ìíịỉĩ]", "i")
+                .replaceAll("[òóọỏõôồốộổỗơờớợởỡ]", "o")
+                .replaceAll("[ùúụủũưừứựửữ]", "u")
+                .replaceAll("[ỳýỵỷỹ]", "y")
+                .replaceAll("[đ]", "d")
+                .replaceAll("[^a-z0-9-]", "")
+                .replaceAll("-+", "-")
+                .replaceAll("^-|-$", "");
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) {
+        this.name = name;
+        if (this.slug == null || this.slug.isEmpty()) {
+            this.slug = generateSlug(name);
+        }
+    }
+
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
@@ -110,10 +136,16 @@ public class Product {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (slug == null || slug.isEmpty()) {
+            slug = generateSlug(name);
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        if (slug == null || slug.isEmpty()) {
+            slug = generateSlug(name);
+        }
     }
 }

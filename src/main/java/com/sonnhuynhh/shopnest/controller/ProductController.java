@@ -2,23 +2,19 @@ package com.sonnhuynhh.shopnest.controller;
 
 import com.sonnhuynhh.shopnest.model.Product;
 import com.sonnhuynhh.shopnest.repository.ProductRepository;
-import com.sonnhuynhh.shopnest.service.SupabaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
-    // cung cấp instance tự động
     @Autowired
-    // inject ProductRepository
     private ProductRepository productRepository;
-    private SupabaseService supabaseService;
 
     @GetMapping
     public List<Product> getAllProducts() {
@@ -33,7 +29,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product product) {
         return productRepository.findById(id)
                 .map(existingProduct -> {
                     existingProduct.setName(product.getName());
@@ -45,22 +41,28 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         if (productRepository.existsById(id)) {
             productRepository.deleteById(id);
-        }else {
-            throw new RuntimeException("Product not found with id: " + id);
+            return ResponseEntity.noContent().build();
         }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public ResponseEntity<String> addProduct(@RequestBody Map<String, Object> productData) {
-        return supabaseService.insertProduct(productData);
+    public ResponseEntity<Product> addProduct(@Valid @RequestBody Product product) {
+        return ResponseEntity.ok(productRepository.save(product));
     }
 
-    // Thêm vào cuối class ProductController
-    @GetMapping("/test-connection")
-    public ResponseEntity<String> testSupabaseConnection() {
-        return supabaseService.testConnection();
+    // Thêm endpoint cho method tùy chỉnh (tìm theo tên)
+    @GetMapping("/search")
+    public List<Product> searchProducts(@RequestParam String name) {
+        return productRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    // Thêm endpoint cho lọc giá (min-max)
+    @GetMapping("/filter-price")
+    public List<Product> filterProductsByPrice(@RequestParam BigDecimal minPrice, @RequestParam BigDecimal maxPrice) {
+        return productRepository.findByPriceBetween(minPrice, maxPrice);
     }
 }

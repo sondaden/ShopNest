@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public pages (Thymeleaf templates)
                         .requestMatchers("/", "/products", "/products/**").permitAll()
+                        .requestMatchers("/product/**", "/p/**").permitAll() // Product detail pages
                         .requestMatchers("/login", "/register").permitAll()
                         .requestMatchers("/cart").permitAll()
                         

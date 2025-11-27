@@ -318,4 +318,9 @@
         formatCurrency
     };
 
+    // Also expose showToast globally for product-detail page
+    window.showToast = showToast;
+    window.addToCart = addToCart;
+    window.updateCartBadge = updateCartBadge;
+
 })();

@@ -297,3 +297,150 @@ footer a:hover {
         display: none !important;
     }
 }
+
+/* ============================================
+   Product Detail Page Styles
+   ============================================ */
+
+/* Main Image Container */
+.main-image-container {
+    background-color: var(--light-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.main-image-container img {
+    transition: transform 0.3s ease;
+}
+
+.main-image-container:hover img {
+    transform: scale(1.02);
+}
+
+/* Thumbnail Images */
+.thumbnail {
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.thumbnail:hover,
+.thumbnail.active {
+    border-color: var(--primary-color);
+}
+
+/* Rating Stars */
+.rating .bi-star-fill,
+.rating .bi-star-half {
+    font-size: 1rem;
+}
+
+/* Stock Status */
+.stock-status .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Quantity Input Group */
+.add-to-cart-section .input-group .form-control {
+    font-weight: 600;
+    border-color: #ced4da;
+}
+
+.add-to-cart-section .input-group .btn {
+    border-color: #ced4da;
+}
+
+.add-to-cart-section .input-group .btn:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+/* Product Tabs */
+.product-tabs .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.product-tabs .nav-link {
+    color: var(--secondary-color);
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.product-tabs .nav-link:hover {
+    color: var(--primary-color);
+    background-color: transparent;
+}
+
+.product-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background-color: transparent;
+}
+
+/* Benefits Section */
+.benefits .bi {
+    font-size: 1rem;
+}
+
+/* Product Meta */
+.product-meta small {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    font-size: 0.875rem;
+}
+
+.breadcrumb-item a {
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-color);
+}
+
+/* Related Products */
+.product-card a {
+    transition: var(--transition);
+}
+
+.product-card a:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Responsive adjustments for product detail */
+@media (max-width: 992px) {
+    .product-info {
+        margin-top: 2rem;
+    }
+    
+    .add-to-cart-section .btn-lg {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .product-tabs .nav-link i {
+        display: none;
+    }
+    
+    .price-section .h3 {
+        font-size: 1.5rem;
+    }
+}

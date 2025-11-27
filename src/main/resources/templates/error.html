@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}">
+    <title>Lỗi - ShopNest</title>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav th:replace="~{fragments/header :: navbar}"></nav>
+
+<!-- Error Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 text-center">
+                <!-- Error Icon -->
+                <div class="error-icon mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 5rem;"></i>
+                </div>
+
+                <!-- Error Code -->
+                <h1 class="display-1 fw-bold text-muted" th:text="${status != null ? status : '404'}">404</h1>
+
+                <!-- Error Title -->
+                <h2 class="h3 mb-3" th:text="${error != null ? error : 'Không tìm thấy trang'}">
+                    Không tìm thấy trang
+                </h2>
+
+                <!-- Error Message -->
+                <p class="text-muted mb-4" th:text="${message != null ? message : 'Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.'}">
+                    Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a th:href="@{/}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-house me-2"></i>Về trang chủ
+                    </a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Quay lại
+                    </button>
+                </div>
+
+                <!-- Helpful Links -->
+                <div class="mt-5 p-4 bg-light rounded">
+                    <h5 class="mb-3">Có thể bạn muốn:</h5>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <a th:href="@{/products}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-grid me-1"></i>Sản phẩm
+                        </a>
+                        <a th:href="@{/cart}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-cart me-1"></i>Giỏ hàng
+                        </a>
+                        <a th:href="@{/login}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+                        </a>
+                        <a th:href="@{/register}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-person-plus me-1"></i>Đăng ký
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contact Support -->
+                <div class="mt-4">
+                    <p class="text-muted small">
+                        Nếu bạn cho rằng đây là lỗi, vui lòng liên hệ
+                        <a href="mailto:support@shopnest.com">support@shopnest.com</a>
+                        hoặc gọi hotline <strong>1900 1234</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

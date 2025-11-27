@@ -3,17 +3,20 @@ package com.sonnhuynhh.shopnest.controller;
 import com.sonnhuynhh.shopnest.model.Product;
 import com.sonnhuynhh.shopnest.model.Role;
 import com.sonnhuynhh.shopnest.model.User;
+import com.sonnhuynhh.shopnest.repository.ProductRepository;
 import com.sonnhuynhh.shopnest.repository.UserRepository;
 import com.sonnhuynhh.shopnest.service.IProductService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Controller for rendering Thymeleaf pages
@@ -23,13 +26,16 @@ import java.util.List;
 public class PageController {
 
     private final IProductService productService;
+    private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public PageController(IProductService productService, 
+    public PageController(IProductService productService,
+                         ProductRepository productRepository,
                          UserRepository userRepository,
                          PasswordEncoder passwordEncoder) {
         this.productService = productService;
+        this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -69,6 +75,70 @@ public class PageController {
             model.addAttribute("error", "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
         }
         return "index"; // Reuse index template for now
+    }
+
+    /**
+     * Product detail page
+     */
+    @GetMapping("/product/{id}")
+    public String productDetail(@PathVariable Long id, Model model) {
+        try {
+            Optional<Product> productOptional = productRepository.findById(id);
+            
+            if (productOptional.isEmpty()) {
+                model.addAttribute("error", "Không tìm thấy sản phẩm!");
+                model.addAttribute("pageTitle", "Không tìm thấy");
+                return "error";
+            }
+            
+            Product product = productOptional.get();
+            model.addAttribute("product", product);
+            model.addAttribute("pageTitle", product.getName());
+            
+            // Get related products from same category
+            if (product.getCategory() != null) {
+                List<Product> relatedProducts = productRepository
+                        .findTop4ByCategoryAndIdNotOrderByRatingDesc(product.getCategory(), product.getId());
+                model.addAttribute("relatedProducts", relatedProducts);
+            }
+            
+            return "product-detail";
+        } catch (Exception e) {
+            model.addAttribute("error", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
+            return "error";
+        }
+    }
+
+    /**
+     * Product detail page by slug (SEO-friendly)
+     */
+    @GetMapping("/p/{slug}")
+    public String productDetailBySlug(@PathVariable String slug, Model model) {
+        try {
+            Optional<Product> productOptional = productRepository.findBySlug(slug);
+            
+            if (productOptional.isEmpty()) {
+                model.addAttribute("error", "Không tìm thấy sản phẩm!");
+                model.addAttribute("pageTitle", "Không tìm thấy");
+                return "error";
+            }
+            
+            Product product = productOptional.get();
+            model.addAttribute("product", product);
+            model.addAttribute("pageTitle", product.getName());
+            
+            // Get related products from same category
+            if (product.getCategory() != null) {
+                List<Product> relatedProducts = productRepository
+                        .findTop4ByCategoryAndIdNotOrderByRatingDesc(product.getCategory(), product.getId());
+                model.addAttribute("relatedProducts", relatedProducts);
+            }
+            
+            return "product-detail";
+        } catch (Exception e) {
+            model.addAttribute("error", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
+            return "error";
+        }
     }
 
     /**

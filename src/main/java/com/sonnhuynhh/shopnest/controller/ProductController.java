@@ -1,7 +1,8 @@
 package com.sonnhuynhh.shopnest.controller;
 
 import com.sonnhuynhh.shopnest.model.Product;
-import com.sonnhuynhh.shopnest.service.IProductService;
+import com.sonnhuynhh.shopnest.service.ProductService;
+import com.sonnhuynhh.shopnest.dto.ProductRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +14,7 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
     @Autowired
-    private IProductService productService;
+    private ProductService productService;
 
     @GetMapping
     public List<Product> getAllProducts() {
@@ -30,7 +31,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product product) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest product) {
         Product updatedProduct = productService.updateProduct(id, product);
         if (updatedProduct != null) {
             return ResponseEntity.ok(updatedProduct);
@@ -45,7 +46,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> addProduct(@Valid @RequestBody Product product) {
+    public ResponseEntity<Product> addProduct(@Valid @RequestBody ProductRequest product) {
         return ResponseEntity.ok(productService.addProduct(product));
     }
 }

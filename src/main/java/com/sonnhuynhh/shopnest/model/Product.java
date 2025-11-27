@@ -18,7 +18,7 @@ public class Product {
     @NotNull(message = "Name cannot be null")
     @Size(max = 255, message = "Name must be less than 255 characters")
     private String name;
-    @Min(value = 0, message = "Price must be positive")
+    @Min(value = 0, message = "Price must be non-negative")
     private BigDecimal price;
     @Min(value =0, message = "Stock must be non-negative")
     private int stock;

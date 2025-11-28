@@ -19,5 +19,11 @@ spring:
       path: /h2-console
 
 jwt:
-  secret: test-secret-key-for-development-only-do-not-use-in-production-123456789
+  # Plaintext credential migrated to Azure Key Vault
+  # secret: REDACTED
   expiration: 86400000
+
+# Replace <your-vault-name> with your actual Azure Key Vault name
+azure:
+  keyvault:
+    uri: https://<your-vault-name>.vault.azure.net

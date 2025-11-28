@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng - ShopNest Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" href="/css/admin.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a th:href="@{/admin}" class="sidebar-brand"><i class="bi bi-shop me-2"></i>ShopNest</a>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item"><a th:href="@{/admin}" class="nav-link"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
+                <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link"><i class="bi bi-box-seam"></i>Sản phẩm</a></li>
+                <li class="nav-item"><a th:href="@{/admin/categories}" class="nav-link"><i class="bi bi-tags"></i>Danh mục</a></li>
+                <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link active"><i class="bi bi-cart-check"></i>Đơn hàng</a></li>
+                <li class="nav-item"><a th:href="@{/admin/users}" class="nav-link"><i class="bi bi-people"></i>Người dùng</a></li>
+                <li class="nav-item"><a th:href="@{/admin/reports}" class="nav-link"><i class="bi bi-bar-chart"></i>Báo cáo</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a th:href="@{/}" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-arrow-left me-2"></i>Về trang chủ</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="btn btn-link d-lg-none me-2" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h5 class="mb-0 fw-bold">Quản lý đơn hàng</h5>
+        </header>
+
+        <div class="admin-content">
+            <!-- Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm text-center py-3">
+                        <div class="card-body">
+                            <h3 class="fw-bold text-warning mb-1" th:text="${pendingCount ?: 12}">12</h3>
+                            <small class="text-muted">Chờ xử lý</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm text-center py-3">
+                        <div class="card-body">
+                            <h3 class="fw-bold text-info mb-1" th:text="${shippingCount ?: 8}">8</h3>
+                            <small class="text-muted">Đang giao</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm text-center py-3">
+                        <div class="card-body">
+                            <h3 class="fw-bold text-success mb-1" th:text="${completedCount ?: 156}">156</h3>
+                            <small class="text-muted">Hoàn thành</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm text-center py-3">
+                        <div class="card-body">
+                            <h3 class="fw-bold text-danger mb-1" th:text="${cancelledCount ?: 3}">3</h3>
+                            <small class="text-muted">Đã hủy</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Tìm kiếm</label>
+                            <input type="text" class="form-control" placeholder="Mã đơn, tên khách..." name="keyword">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-select" name="status">
+                                <option value="">Tất cả</option>
+                                <option value="PENDING">Chờ xử lý</option>
+                                <option value="CONFIRMED">Đã xác nhận</option>
+                                <option value="SHIPPING">Đang giao</option>
+                                <option value="COMPLETED">Hoàn thành</option>
+                                <option value="CANCELLED">Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Từ ngày</label>
+                            <input type="date" class="form-control" name="fromDate">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Đến ngày</label>
+                            <input type="date" class="form-control" name="toDate">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+                            <button type="reset" class="btn btn-outline-secondary">Xóa lọc</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Sản phẩm</th>
+                            <th>Tổng tiền</th>
+                            <th>Thanh toán</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày đặt</th>
+                            <th width="100">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td class="fw-semibold" th:text="${order.code}">SN12345</td>
+                            <td>
+                                <div>
+                                    <span th:text="${order.customerName}">Nguyễn Văn A</span>
+                                    <br><small class="text-muted" th:text="${order.customerPhone}">0901234567</small>
+                                </div>
+                            </td>
+                            <td th:text="${order.itemsCount + ' sản phẩm'}">3 sản phẩm</td>
+                            <td class="text-danger fw-semibold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1.250.000 ₫</td>
+                            <td>
+                                <span class="badge bg-success" th:if="${order.isPaid}">Đã thanh toán</span>
+                                <span class="badge bg-secondary" th:unless="${order.isPaid}">COD</span>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm status-select" th:data-id="${order.id}" style="width: 130px;">
+                                    <option value="PENDING" th:selected="${order.status == 'PENDING'}">Chờ xử lý</option>
+                                    <option value="CONFIRMED" th:selected="${order.status == 'CONFIRMED'}">Đã xác nhận</option>
+                                    <option value="SHIPPING" th:selected="${order.status == 'SHIPPING'}">Đang giao</option>
+                                    <option value="COMPLETED" th:selected="${order.status == 'COMPLETED'}">Hoàn thành</option>
+                                    <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">Đã hủy</option>
+                                </select>
+                            </td>
+                            <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">28/11/2025</td>
+                            <td>
+                                <a th:href="@{'/admin/orders/' + ${order.id}}" class="btn btn-sm btn-outline-primary" title="Chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-secondary" title="In hóa đơn">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Sample data when no orders -->
+                        <tr th:if="${orders == null}">
+                            <td class="fw-semibold">SN12345</td>
+                            <td><div>Nguyễn Văn A<br><small class="text-muted">0901234567</small></div></td>
+                            <td>3 sản phẩm</td>
+                            <td class="text-danger fw-semibold">1.250.000 ₫</td>
+                            <td><span class="badge bg-secondary">COD</span></td>
+                            <td>
+                                <select class="form-select form-select-sm" style="width: 130px;">
+                                    <option selected>Chờ xử lý</option>
+                                    <option>Đã xác nhận</option>
+                                    <option>Đang giao</option>
+                                </select>
+                            </td>
+                            <td>28/11/2025 10:30</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                    <div class="text-muted">Hiển thị 1-10 trên <span th:text="${totalOrders ?: 179}">179</span> đơn hàng</div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item disabled"><span class="page-link">Trước</span></li>
+                            <li class="page-item active"><span class="page-link">1</span></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update order status
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const orderId = this.dataset.id;
+            const newStatus = this.value;
+            // TODO: Call API to update status
+            console.log('Update order', orderId, 'to', newStatus);
+        });
+    });
+});
+</script>
+
+</body>
+</html>

@@ -14,6 +14,13 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
 
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 jwt:
   secret: 6Ly4d0F1eXNhbXBsZVNlY3JldEtleUZvclRlc3RpbmcxMjM0NTY=   # 256-bit
   expiration: 86400000   # 24h

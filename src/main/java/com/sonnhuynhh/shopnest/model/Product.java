@@ -39,11 +39,13 @@ public class Product {
     @Column(length = 255)
     private String imageUrl;
 
-    @Size(max = 100)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
-    @Size(max = 100)
-    private String brand;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
 
     private Double rating;
 
@@ -55,7 +57,7 @@ public class Product {
     public Product() {}
 
     public Product(String name, BigDecimal price, int stock, String description, LocalDate expirationDate,
-                   LocalDate importDate, String imageUrl, String category, String brand, Double rating) {
+                   LocalDate importDate, String imageUrl, Category category, Brand brand, Double rating) {
         this.name = name;
         this.slug = generateSlug(name);
         this.price = price;
@@ -117,11 +119,11 @@ public class Product {
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public Category getCategory() { return category; }
+    public void setCategory(Category category) { this.category = category; }
 
-    public String getBrand() { return brand; }
-    public void setBrand(String brand) { this.brand = brand; }
+    public Brand getBrand() { return brand; }
+    public void setBrand(Brand brand) { this.brand = brand; }
 
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }

@@ -4,6 +4,8 @@ import com.sonnhuynhh.shopnest.dto.*;
 import com.sonnhuynhh.shopnest.model.*;
 import com.sonnhuynhh.shopnest.repository.*;
 import com.sonnhuynhh.shopnest.utils.VietnameseUtils;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +30,12 @@ public class SearchService {
     private final ProductRepository productRepository;
     private final SearchHistoryRepository searchHistoryRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final BrandRepository brandRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String CACHE_SUGGESTIONS = "search:suggestions";
-    private static final long CACHE_TTL = 300; // 5 phút
+    private static final long CACHE_TTL = 300;
 
     private User getCurrentUserOrNull() {
         try {
@@ -42,56 +47,106 @@ public class SearchService {
         }
     }
 
-    // TÌM KIẾM CHỈ ĐỌC → readOnly = true
+    private String normalize(String input) {
+        if (input == null || input.isBlank()) return null;
+        return VietnameseUtils.removeAccent(input)
+                .replaceAll("\\s+", "")
+                .toLowerCase();
+    }
+
     @Transactional(readOnly = true)
     public SearchResponse search(SearchRequest request) {
         String keyword = request.q() != null ? request.q().trim() : null;
 
         Pageable pageable = PageRequest.of(request.page(), request.size(), request.sort().getSort());
 
-        Specification<Product> spec = null;
-
-        if (keyword != null && !keyword.isBlank()) {
-            String lowerKeyword = keyword.toLowerCase();
-            String noAccentKeyword = VietnameseUtils.removeAccent(keyword).toLowerCase();
-
-            Specification<Product> keywordSpec = (root, query, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("name")), "%" + lowerKeyword + "%"),
-                    cb.like(cb.lower(root.get("slug")), "%" + lowerKeyword + "%"),
-                    cb.like(cb.lower(root.get("name")), "%" + noAccentKeyword + "%"),
-                    cb.like(cb.lower(root.get("slug")), "%" + noAccentKeyword + "%")
-            );
-            spec = spec == null ? keywordSpec : spec.and(keywordSpec);
+        if (keyword == null || keyword.isBlank()) {
+            Page<Product> page = productRepository.findAll(pageable);
+            return buildResponse(page, Collections.emptyList());
         }
 
-        if (request.categoryId() != null) {
-            Specification<Product> catSpec = (root, query, cb) -> cb.equal(root.get("category").get("id"), request.categoryId());
-            spec = spec == null ? catSpec : spec.and(catSpec);
-        }
-        if (request.brandId() != null) {
-            Specification<Product> brandSpec = (root, query, cb) -> cb.equal(root.get("brand").get("id"), request.brandId());
-            spec = spec == null ? brandSpec : spec.and(brandSpec);
-        }
+        String lower = keyword.toLowerCase();
+        String noAccent = VietnameseUtils.removeAccent(keyword).toLowerCase();
+        String noSpaceNoAccent = noAccent.replaceAll("\\s+", "");
+
+        Specification<Product> spec = (root, query, cb) -> {
+            List<Predicate> searchPredicates = new ArrayList<>();
+
+            // 1. Tìm trong tên + slug sản phẩm (có và không có khoảng cách)
+            searchPredicates.add(cb.like(cb.lower(root.get("name")), "%" + lower + "%"));
+            searchPredicates.add(cb.like(cb.lower(root.get("slug")), "%" + lower + "%"));
+            searchPredicates.add(cb.like(cb.lower(root.get("name")), "%" + noAccent + "%"));
+            searchPredicates.add(cb.like(cb.lower(root.get("slug")), "%" + noAccent + "%"));
+
+            // So sánh không khoảng cách: loại bỏ space khỏi name/slug
+            searchPredicates.add(cb.like(
+                    cb.lower(cb.function("replace", String.class, root.get("name"), cb.literal(" "), cb.literal(""))),
+                    "%" + noSpaceNoAccent + "%"
+            ));
+            searchPredicates.add(cb.like(
+                    cb.lower(cb.function("replace", String.class, root.get("slug"), cb.literal(" "), cb.literal(""))),
+                    "%" + noSpaceNoAccent + "%"
+            ));
+
+            // 2. Tìm trong tên + slug danh mục
+            var categoryJoin = root.join("category", JoinType.LEFT);
+            searchPredicates.add(cb.like(cb.lower(categoryJoin.get("name")), "%" + lower + "%"));
+            searchPredicates.add(cb.like(cb.lower(categoryJoin.get("slug")), "%" + lower + "%"));
+            searchPredicates.add(cb.like(cb.lower(categoryJoin.get("name")), "%" + noAccent + "%"));
+            searchPredicates.add(cb.like(cb.lower(categoryJoin.get("slug")), "%" + noAccent + "%"));
+
+            searchPredicates.add(cb.like(
+                    cb.lower(cb.function("replace", String.class, categoryJoin.get("name"), cb.literal(" "), cb.literal(""))),
+                    "%" + noSpaceNoAccent + "%"
+            ));
+            searchPredicates.add(cb.like(
+                    cb.lower(cb.function("replace", String.class, categoryJoin.get("slug"), cb.literal(" "), cb.literal(""))),
+                    "%" + noSpaceNoAccent + "%"
+            ));
+
+            // 3. Tìm trong tên + slug thương hiệu
+            var brandJoin = root.join("brand", JoinType.LEFT);
+            searchPredicates.add(cb.like(cb.lower(brandJoin.get("name")), "%" + lower + "%"));
+            searchPredicates.add(cb.like(cb.lower(brandJoin.get("slug")), "%" + lower + "%"));
+            searchPredicates.add(cb.like(cb.lower(brandJoin.get("name")), "%" + noAccent + "%"));
+            searchPredicates.add(cb.like(cb.lower(brandJoin.get("slug")), "%" + noAccent + "%"));
+
+            searchPredicates.add(cb.like(
+                    cb.lower(cb.function("replace", String.class, brandJoin.get("name"), cb.literal(" "), cb.literal(""))),
+                    "%" + noSpaceNoAccent + "%"
+            ));
+            searchPredicates.add(cb.like(
+                    cb.lower(cb.function("replace", String.class, brandJoin.get("slug"), cb.literal(" "), cb.literal(""))),
+                    "%" + noSpaceNoAccent + "%"
+            ));
+
+            return cb.or(searchPredicates.toArray(new Predicate[0]));
+        };
+
+        // 4. Lọc giá
         if (request.minPrice() != null) {
-            Specification<Product> minSpec = (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("price"), request.minPrice());
-            spec = spec == null ? minSpec : spec.and(minSpec);
+            Specification<Product> minPriceSpec = (root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("price"), request.minPrice());
+            spec = spec.and(minPriceSpec);
         }
         if (request.maxPrice() != null) {
-            Specification<Product> maxSpec = (root, query, cb) -> cb.lessThanOrEqualTo(root.get("price"), request.maxPrice());
-            spec = spec == null ? maxSpec : spec.and(maxSpec);
+            Specification<Product> maxPriceSpec = (root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("price"), request.maxPrice());
+            spec = spec.and(maxPriceSpec);
         }
 
         Page<Product> page = productRepository.findAll(spec, pageable);
 
+        List<String> suggestions = keyword.length() >= 2 ? getSuggestions(keyword) : Collections.emptyList();
+
+        return buildResponse(page, suggestions);
+    }
+
+    private SearchResponse buildResponse(Page<Product> page, List<String> suggestions) {
         List<ProductSearchDto> items = page.getContent().stream()
                 .map(p -> new ProductSearchDto(
-                        p.getId(),
-                        p.getName(),
-                        p.getSlug(),
-                        p.getImageUrl(),
-                        p.getPrice(),
-                        p.getRating(),
-                        p.getStock(),
+                        p.getId(), p.getName(), p.getSlug(), p.getImageUrl(),
+                        p.getPrice(), p.getRating(), p.getStock(),
                         p.getCategory() != null ? p.getCategory().getId() : null,
                         p.getCategory() != null ? p.getCategory().getName() : null,
                         p.getBrand() != null ? p.getBrand().getId() : null,
@@ -99,14 +154,9 @@ public class SearchService {
                 ))
                 .toList();
 
-        List<String> suggestions = (keyword != null && keyword.length() >= 2)
-                ? getSuggestions(keyword)
-                : Collections.emptyList();
-
         return new SearchResponse(items, page.getTotalElements(), page.getNumber(), page.getSize(), suggestions);
     }
 
-    // GỢI Ý – CHỈ ĐỌC
     @Transactional(readOnly = true)
     @Cacheable(value = "suggestions", key = "#prefix")
     public List<String> getSuggestions(String prefix) {
@@ -132,7 +182,6 @@ public class SearchService {
         return suggestions;
     }
 
-    // LƯU LỊCH SỬ TÌM KIẾM – GỌI RIÊNG, KHÔNG GỌI TRONG SEARCH()
     @Transactional
     public void logSearch(String keyword) {
         if (keyword == null || keyword.trim().isBlank()) return;
@@ -155,7 +204,6 @@ public class SearchService {
         history.setLastSearchedAt(LocalDateTime.now());
         searchHistoryRepository.save(history);
 
-        // Xóa cache gợi ý
         Set<String> keys = redisTemplate.keys(CACHE_SUGGESTIONS + ":*");
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);

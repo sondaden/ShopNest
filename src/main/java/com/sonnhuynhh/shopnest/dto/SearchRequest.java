@@ -9,7 +9,9 @@ public record SearchRequest(
         @RequestParam(defaultValue = "0") Integer page,
         @RequestParam(defaultValue = "20") Integer size,
         @RequestParam(required = false) Long categoryId,
+        @RequestParam(required = false) String category,
         @RequestParam(required = false) Long brandId,
+        @RequestParam(required = false) String brand,
         @RequestParam(required = false) BigDecimal minPrice,
         @RequestParam(required = false) BigDecimal maxPrice,
         @RequestParam(defaultValue = "NEWEST") SortOption sort

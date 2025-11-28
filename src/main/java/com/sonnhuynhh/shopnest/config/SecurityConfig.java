@@ -34,7 +34,16 @@ public class SecurityConfig {
                         .requestMatchers("/", "/products", "/products/**").permitAll()
                         .requestMatchers("/product/**", "/p/**").permitAll() // Product detail pages
                         .requestMatchers("/login", "/register").permitAll()
-                        .requestMatchers("/cart").permitAll()
+                        .requestMatchers("/cart", "/checkout").permitAll()
+                        .requestMatchers("/order-success").permitAll()
+                        .requestMatchers("/wishlist").permitAll()
+                        
+                        // User authenticated pages
+                        .requestMatchers("/profile", "/change-password").authenticated()
+                        .requestMatchers("/orders", "/orders/**", "/order-history", "/order-detail/**").authenticated()
+                        
+                        // Admin pages
+                        .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                         
                         // Static resources
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
@@ -46,11 +55,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/brands/**").permitAll()
                         .requestMatchers("/api/search/**").permitAll()
+                        
+                        // User API endpoints
+                        .requestMatchers("/api/cart/**").authenticated()
+                        .requestMatchers("/api/orders/**").authenticated()
+                        .requestMatchers("/api/wishlist/**").authenticated()
 
-                        // ADMIN only
+                        // ADMIN only API
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )

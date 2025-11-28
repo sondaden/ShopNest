@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}">
+    <title>Chi tiết đơn hàng - ShopNest</title>
+</head>
+<body>
+<nav th:replace="~{fragments/header :: navbar}"></nav>
+
+<section class="py-5 bg-light min-vh-100">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/orders}">Đơn hàng của tôi</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${order?.code}">Chi tiết</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
+            <div>
+                <p class="text-muted mb-1">Mã đơn hàng</p>
+                <h2 class="fw-bold mb-0" th:text="${order?.code}">SN123456</h2>
+                <small class="text-muted" th:if="${order?.createdAt}" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">28/11/2025 10:30</small>
+            </div>
+            <div class="ms-auto text-end">
+                <span class="badge fs-6 px-3 py-2" th:text="${order?.statusLabel}">Đang giao</span>
+                <p class="text-muted mb-0" th:if="${order?.updatedAt}">Cập nhật lần cuối <span th:text="${#temporals.format(order.updatedAt, 'dd/MM/yyyy HH:mm')}">29/11/2025</span></p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="fw-bold mb-0">Sản phẩm</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="order-item d-flex align-items-center mb-4" th:each="item : ${order?.items}">
+                            <img class="rounded" th:src="${item.thumbnail}" alt="Product" width="70" height="70">
+                            <div class="ms-3 flex-grow-1">
+                                <h6 class="mb-1" th:text="${item.name}">Áo khoác chần bông</h6>
+                                <p class="text-muted mb-0">Màu sắc: <span th:text="${item.color}">Be</span> · Size <span th:text="${item.size}">M</span></p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-1">x<span th:text="${item.quantity}">2</span></p>
+                                <p class="fw-semibold text-danger mb-0" th:text="${#numbers.formatDecimal(item.subtotal,0,'COMMA',0,'POINT') + ' ₫'}">1.200.000 ₫</p>
+                            </div>
+                        </div>
+                        <div class="order-item d-flex align-items-center mb-4" th:if="${order?.items == null}">
+                            <img class="rounded" src="https://placehold.co/120" alt="Product" width="70" height="70">
+                            <div class="ms-3 flex-grow-1">
+                                <h6 class="mb-1">Bộ sưu tập Thu Đông</h6>
+                                <p class="text-muted mb-0">Màu sắc: Đen · Size L</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-1">x1</p>
+                                <p class="fw-semibold text-danger mb-0">950.000 ₫</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Dòng tiền</h5>
+                        <a href="#" class="text-decoration-none">Xuất hóa đơn</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tạm tính</span>
+                            <span th:text="${#numbers.formatDecimal(order?.subtotal ?: 0,0,'COMMA',0,'POINT') + ' ₫'}">2.150.000 ₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Vận chuyển</span>
+                            <span th:text="${order?.shippingFee != null ? #numbers.formatDecimal(order.shippingFee,0,'COMMA',0,'POINT') + ' ₫' : 'Miễn phí'}">Miễn phí</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Khuyến mãi</span>
+                            <span class="text-success" th:text="${order?.discount != null ? '-' + #numbers.formatDecimal(order.discount,0,'COMMA',0,'POINT') + ' ₫' : '0 ₫'}">-150.000 ₫</span>
+                        </div>
+                        <div class="border-top pt-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Tổng thanh toán</span>
+                            <span class="fs-4 text-danger fw-semibold" th:text="${#numbers.formatDecimal(order?.totalAmount ?: 0,0,'COMMA',0,'POINT') + ' ₫'}">2.000.000 ₫</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="fw-bold mb-0">Thông tin giao hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="fw-semibold mb-1" th:text="${order?.customerName ?: 'Nguyễn Văn A'}">Nguyễn Văn A</p>
+                        <p class="mb-1" th:text="${order?.customerPhone ?: '0901 234 567'}">0901 234 567</p>
+                        <p class="text-muted" th:text="${order?.shippingAddress ?: '123 Nguyễn Huệ, Q.1, TP.HCM'}">Địa chỉ</p>
+                        <div class="status-timeline mt-4">
+                            <div class="timeline-step" th:each="tracking : ${order?.trackingSteps}">
+                                <div class="timeline-icon" th:classappend="${tracking.completed ? ' completed' : ''}">
+                                    <i class="bi" th:classappend="${tracking.icon}"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <p class="fw-semibold mb-0" th:text="${tracking.title}">Đang giao</p>
+                                    <small class="text-muted" th:text="${tracking.time}">29/11/2025 14:20</small>
+                                </div>
+                            </div>
+                            <div class="timeline-step" th:if="${order?.trackingSteps == null}">
+                                <div class="timeline-icon completed">
+                                    <i class="bi bi-check2"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <p class="fw-semibold mb-0">Đang xử lý</p>
+                                    <small class="text-muted">29/11/2025 10:20</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="fw-bold mb-0">Ghi chú</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-0" th:text="${order?.note ?: 'Vui lòng gọi trước khi giao hàng. Không giao giờ hành chính.'}">Ghi chú</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<style>
+.badge { background-color: #d1f4d7; color: #0f8b3b; }
+.order-item:not(:last-child) { border-bottom: 1px solid #f1f1f1; padding-bottom: 1rem; }
+.status-timeline { border-left: 2px solid #f1f1f1; padding-left: 1.5rem; }
+.timeline-step { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+.timeline-icon { width: 32px; height: 32px; border-radius: 999px; background-color: #f1f1f1; display: flex; align-items: center; justify-content: center; }
+.timeline-icon.completed { background-color: #0d6efd; color: #fff; }
+</style>
+
+</body>
+</html>

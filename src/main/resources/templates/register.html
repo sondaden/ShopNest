@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}">
+    <title>Đăng ký - ShopNest</title>
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav th:replace="~{fragments/header :: navbar}"></nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Logo -->
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shop display-4 text-primary"></i>
+                        <h4 class="fw-bold mt-2">Tạo tài khoản</h4>
+                        <p class="text-muted">Đăng ký để mua sắm tại ShopNest</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <span th:text="${error}">Đã có lỗi xảy ra</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span th:text="${message}">Đăng ký thành công</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Register Form -->
+                    <form th:action="@{/register}" method="post" id="registerForm">
+                        <!-- Full Name -->
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="fullName" 
+                                       name="fullName" 
+                                       placeholder="Nhập họ và tên"
+                                       th:value="${fullName}"
+                                       required>
+                            </div>
+                            <div class="invalid-feedback" id="fullNameError"></div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="example@email.com"
+                                       th:value="${email}"
+                                       required>
+                            </div>
+                            <div class="invalid-feedback" id="emailError"></div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Số điện thoại</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="phone" 
+                                       name="phone" 
+                                       placeholder="0912 345 678"
+                                       th:value="${phone}"
+                                       pattern="[0-9]{10,11}">
+                            </div>
+                            <div class="form-text">Tùy chọn - Dùng để nhận thông báo đơn hàng</div>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-at"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="username" 
+                                       name="username" 
+                                       placeholder="Nhập tên đăng nhập"
+                                       th:value="${username}"
+                                       pattern="[a-zA-Z0-9_]{4,20}"
+                                       required>
+                            </div>
+                            <div class="form-text">4-20 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới</div>
+                            <div class="invalid-feedback" id="usernameError"></div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Nhập mật khẩu"
+                                       minlength="6"
+                                       required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Tối thiểu 6 ký tự</div>
+                            <div class="invalid-feedback" id="passwordError"></div>
+                            
+                            <!-- Password Strength Indicator -->
+                            <div class="mt-2">
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar" id="passwordStrength" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted" id="passwordStrengthText"></small>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="confirmPassword" 
+                                       name="confirmPassword" 
+                                       placeholder="Nhập lại mật khẩu"
+                                       required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback" id="confirmPasswordError"></div>
+                        </div>
+
+                        <!-- Terms & Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    Tôi đồng ý với <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#termsModal">Điều khoản sử dụng</a> 
+                                    và <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#privacyModal">Chính sách bảo mật</a>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Newsletter -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="newsletter" name="newsletter">
+                                <label class="form-check-label" for="newsletter">
+                                    Đăng ký nhận thông tin khuyến mãi qua email
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                            <i class="bi bi-person-plus me-2"></i>Đăng ký
+                        </button>
+
+                        <div class="text-center">
+                            <span class="text-muted">Đã có tài khoản?</span>
+                            <a th:href="@{/login}" class="text-decoration-none ms-1">Đăng nhập ngay</a>
+                        </div>
+                    </form>
+
+                    <!-- Social Register -->
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <hr class="flex-grow-1">
+                            <span class="mx-3 text-muted small">Hoặc đăng ký với</span>
+                            <hr class="flex-grow-1">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-danger">
+                                <i class="bi bi-google me-2"></i>Google
+                            </button>
+                            <button class="btn btn-outline-primary">
+                                <i class="bi bi-facebook me-2"></i>Facebook
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Điều khoản sử dụng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Điều khoản chung</h6>
+                <p>Khi sử dụng dịch vụ của ShopNest, bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu trong tài liệu này.</p>
+                
+                <h6>2. Tài khoản người dùng</h6>
+                <p>Bạn chịu trách nhiệm bảo mật thông tin tài khoản của mình. Mọi hoạt động trên tài khoản đều thuộc trách nhiệm của bạn.</p>
+                
+                <h6>3. Quy định mua hàng</h6>
+                <p>Khi đặt hàng, bạn cam kết cung cấp thông tin chính xác và thanh toán đúng hạn.</p>
+                
+                <h6>4. Chính sách đổi trả</h6>
+                <p>Sản phẩm được đổi trả trong vòng 30 ngày kể từ ngày mua, với điều kiện còn nguyên tem mác và hóa đơn.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chính sách bảo mật</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Thu thập thông tin</h6>
+                <p>Chúng tôi thu thập thông tin cá nhân khi bạn đăng ký tài khoản, đặt hàng hoặc liên hệ với chúng tôi.</p>
+                
+                <h6>2. Sử dụng thông tin</h6>
+                <p>Thông tin của bạn được sử dụng để xử lý đơn hàng, cung cấp dịch vụ khách hàng và gửi thông tin khuyến mãi (nếu bạn đồng ý).</p>
+                
+                <h6>3. Bảo mật thông tin</h6>
+                <p>Chúng tôi cam kết bảo mật thông tin cá nhân của bạn và không chia sẻ cho bên thứ ba trừ khi có sự đồng ý của bạn.</p>
+                
+                <h6>4. Cookie</h6>
+                <p>Website sử dụng cookie để cải thiện trải nghiệm người dùng. Bạn có thể tắt cookie trong trình duyệt.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle password visibility
+        function setupPasswordToggle(toggleId, inputId) {
+            const toggle = document.getElementById(toggleId);
+            const input = document.getElementById(inputId);
+            if (toggle && input) {
+                toggle.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    }
+                });
+            }
+        }
+
+        setupPasswordToggle('togglePassword', 'password');
+        setupPasswordToggle('toggleConfirmPassword', 'confirmPassword');
+
+        // Password strength checker
+        const passwordInput = document.getElementById('password');
+        const strengthBar = document.getElementById('passwordStrength');
+        const strengthText = document.getElementById('passwordStrengthText');
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let text = '';
+            let color = '';
+
+            if (password.length >= 6) strength += 25;
+            if (password.length >= 10) strength += 25;
+            if (/[A-Z]/.test(password)) strength += 15;
+            if (/[a-z]/.test(password)) strength += 10;
+            if (/[0-9]/.test(password)) strength += 15;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 10;
+
+            if (strength < 30) {
+                text = 'Yếu';
+                color = 'bg-danger';
+            } else if (strength < 60) {
+                text = 'Trung bình';
+                color = 'bg-warning';
+            } else if (strength < 80) {
+                text = 'Mạnh';
+                color = 'bg-info';
+            } else {
+                text = 'Rất mạnh';
+                color = 'bg-success';
+            }
+
+            strengthBar.style.width = strength + '%';
+            strengthBar.className = 'progress-bar ' + color;
+            strengthText.textContent = password.length > 0 ? 'Độ mạnh: ' + text : '';
+        });
+
+        // Confirm password validation
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+        confirmPasswordInput.addEventListener('input', function() {
+            if (this.value !== passwordInput.value) {
+                this.classList.add('is-invalid');
+                confirmPasswordError.textContent = 'Mật khẩu xác nhận không khớp';
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+
+        // Form validation
+        const form = document.getElementById('registerForm');
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+
+            // Check password match
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                e.preventDefault();
+                confirmPasswordInput.classList.add('is-invalid');
+                confirmPasswordError.textContent = 'Mật khẩu xác nhận không khớp';
+                isValid = false;
+            }
+
+            // Check password length
+            if (passwordInput.value.length < 6) {
+                e.preventDefault();
+                passwordInput.classList.add('is-invalid');
+                document.getElementById('passwordError').textContent = 'Mật khẩu phải có ít nhất 6 ký tự';
+                isValid = false;
+            }
+
+            return isValid;
+        });
+
+        // Real-time username validation
+        const usernameInput = document.getElementById('username');
+        usernameInput.addEventListener('input', function() {
+            const pattern = /^[a-zA-Z0-9_]{4,20}$/;
+            if (!pattern.test(this.value) && this.value.length > 0) {
+                this.classList.add('is-invalid');
+                document.getElementById('usernameError').textContent = 'Tên đăng nhập không hợp lệ';
+            } else {
+                this.classList.remove('is-invalid');
+                if (this.value.length >= 4) {
+                    this.classList.add('is-valid');
+                }
+            }
+        });
+
+        // Real-time email validation
+        const emailInput = document.getElementById('email');
+        emailInput.addEventListener('input', function() {
+            const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!pattern.test(this.value) && this.value.length > 0) {
+                this.classList.add('is-invalid');
+                document.getElementById('emailError').textContent = 'Email không hợp lệ';
+            } else {
+                this.classList.remove('is-invalid');
+                if (this.value.length > 0) {
+                    this.classList.add('is-valid');
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

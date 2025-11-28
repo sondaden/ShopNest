@@ -30,7 +30,17 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public pages (Thymeleaf templates)
+                        .requestMatchers("/", "/products", "/products/**").permitAll()
+                        .requestMatchers("/product/**", "/p/**").permitAll() // Product detail pages
+                        .requestMatchers("/login", "/register").permitAll()
+                        .requestMatchers("/cart").permitAll()
+                        
+                        // Static resources
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers("/favicon.ico", "/error").permitAll()
+                        
+                        // Public API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()

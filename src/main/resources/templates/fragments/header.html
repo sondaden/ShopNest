@@ -14,9 +14,9 @@
 <body>
 
 <!-- Navbar Fragment -->
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top" id="mainNavbar">
     <div class="container">
-        <a class="navbar-brand fw-bold" th:href="@{/}">
+        <a class="navbar-brand fw-bold d-flex align-items-center" th:href="@{/}">
             <i class="bi bi-shop me-2"></i>ShopNest
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -25,19 +25,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}">
+                    <a class="nav-link" th:href="@{/}" th:classappend="${currentPath == '/' ? 'active' : ''}">
                         <i class="bi bi-house-door me-1"></i>Trang chủ
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/products}">
+                    <a class="nav-link" th:href="@{/products}" th:classappend="${currentPath != null && currentPath.startsWith('/products') ? 'active' : ''}">
                         <i class="bi bi-grid me-1"></i>Sản phẩm
                     </a>
                 </li>
             </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link position-relative" th:href="@{/cart}">
+            <ul class="navbar-nav align-items-center">
+                <li class="nav-item me-2">
+                    <a class="nav-link nav-icon position-relative" th:href="@{/cart}" title="Giỏ hàng">
                         <i class="bi bi-cart3 fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                               th:if="${cartCount != null && cartCount > 0}" th:text="${cartCount}">0</span>

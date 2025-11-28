@@ -221,10 +221,48 @@
     }
 
     // ============================================
+    // Navbar Scroll Effect
+    // ============================================
+    
+    function initNavbarScrollEffect() {
+        const navbar = document.getElementById('mainNavbar');
+        if (!navbar) return;
+
+        let lastScrollY = window.scrollY;
+        let ticking = false;
+
+        function updateNavbar() {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', function() {
+            lastScrollY = window.scrollY;
+            if (!ticking) {
+                window.requestAnimationFrame(function() {
+                    updateNavbar();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        // Initial check
+        updateNavbar();
+    }
+
+    // ============================================
     // Event Listeners
     // ============================================
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize navbar scroll effect
+        initNavbarScrollEffect();
+
         // Add to cart buttons
         document.querySelectorAll('.btn-add-cart').forEach(btn => {
             btn.addEventListener('click', function(e) {

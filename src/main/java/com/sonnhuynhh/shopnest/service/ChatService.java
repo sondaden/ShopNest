@@ -14,7 +14,7 @@ import java.util.*;
 @Service
 public class ChatService {
 
-    @Value("${gemini.api.key:AIzaSyCudx6BSqFLtDBY2Yfr-VoUkfOh3rNHM5M}")
+    @Value("${gemini.api.key:}")
     private String apiKey;
 
     private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";

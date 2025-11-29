@@ -26,6 +26,13 @@
                         Sai tên đăng nhập hoặc mật khẩu
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
+                    
+                    <!-- OAuth2 Error Message -->
+                    <div th:if="${param.oauth2error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        Đăng nhập bằng Google thất bại. Vui lòng thử lại.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
 
                     <!-- Logout Message -->
                     <div th:if="${param.logout}" class="alert alert-info alert-dismissible fade show" role="alert">
@@ -86,7 +93,7 @@
                                 <input type="checkbox" class="form-check-input" id="remember" name="remember">
                                 <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
                             </div>
-                            <a href="#" class="text-decoration-none small">Quên mật khẩu?</a>
+                            <a th:href="@{/forgot-password}" class="text-decoration-none small">Quên mật khẩu?</a>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2 mb-3">

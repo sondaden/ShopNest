@@ -30,6 +30,11 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
+        // Trả về email để authentication.getName() có thể tìm user bằng email
+        return email;
+    }
+    
+    public String getDisplayName() {
         return oAuth2User.getAttribute("name");
     }
 

@@ -33,9 +33,12 @@ public class CartService {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             throw new RuntimeException("User not authenticated");
         }
-        String username = auth.getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        String identifier = auth.getName();
+        
+        // Thử tìm bằng username trước, sau đó bằng email (cho OAuth2 users)
+        return userRepository.findByUsername(identifier)
+                .or(() -> userRepository.findByEmail(identifier))
+                .orElseThrow(() -> new RuntimeException("User not found: " + identifier));
     }
 
     public CartResponse getCart() {

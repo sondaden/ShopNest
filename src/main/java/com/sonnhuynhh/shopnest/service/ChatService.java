@@ -2,10 +2,13 @@ package com.sonnhuynhh.shopnest.service;
 
 import com.sonnhuynhh.shopnest.model.Product;
 import com.sonnhuynhh.shopnest.repository.ProductRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.NumberFormat;
@@ -13,6 +16,8 @@ import java.util.*;
 
 @Service
 public class ChatService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     @Value("${gemini.api.key:}")
     private String apiKey;
@@ -51,6 +56,12 @@ public class ChatService {
 
     public String chat(String userMessage) {
         try {
+            // Check API key
+            if (apiKey == null || apiKey.isEmpty()) {
+                logger.error("Gemini API key is not configured");
+                return "Chatbot chưa được cấu hình. Vui lòng liên hệ admin.";
+            }
+            
             String url = GEMINI_API_URL + "?key=" + apiKey;
 
             HttpHeaders headers = new HttpHeaders();
@@ -84,6 +95,7 @@ public class ChatService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
+            logger.info("Sending request to Gemini API...");
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
@@ -92,8 +104,16 @@ public class ChatService {
 
             return "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.";
 
+        } catch (HttpClientErrorException e) {
+            logger.error("Gemini API Error - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED || e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                return "API key không hợp lệ. Vui lòng liên hệ admin.";
+            } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                return "Hệ thống đang bận. Vui lòng thử lại sau ít phút.";
+            }
+            return "Xin lỗi, đã xảy ra lỗi khi kết nối với AI.";
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Chat error: ", e);
             return "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại sau.";
         }
     }

@@ -65,15 +65,15 @@
                 <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="toggleUserDropdown(event)">
                         <i class="bi bi-person-circle fs-5 me-1"></i>
-                        <span class="d-none d-md-inline" sec:authentication="name">User</span>
+                        <span class="d-none d-md-inline" th:text="${currentUserDisplayName ?: 'User'}">User</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown" id="userDropdownMenu">
                         <li class="px-3 py-2 border-bottom">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-person-circle fs-3 me-2 text-primary"></i>
                                 <div>
-                                    <div class="fw-semibold" sec:authentication="name">User</div>
-                                    <small class="text-muted">Thành viên</small>
+                                    <div class="fw-semibold" th:text="${currentUserDisplayName ?: 'User'}">User</div>
+                                    <small class="text-muted" th:text="${currentUser?.email}">email@example.com</small>
                                 </div>
                             </div>
                         </li>

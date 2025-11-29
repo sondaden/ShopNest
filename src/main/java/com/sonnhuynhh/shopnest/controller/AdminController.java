@@ -421,7 +421,10 @@ public class AdminController {
             return "redirect:/login";
         }
         
-        User admin = userRepository.findByUsername(authentication.getName()).orElse(null);
+        String identifier = authentication.getName();
+        User admin = userRepository.findByUsername(identifier)
+                .or(() -> userRepository.findByEmail(identifier))
+                .orElse(null);
         model.addAttribute("user", admin);
         model.addAttribute("activePage", "profile");
         return "admin/profile";
@@ -434,7 +437,9 @@ public class AdminController {
                                 Authentication authentication,
                                 RedirectAttributes redirectAttributes) {
         try {
-            User admin = userRepository.findByUsername(authentication.getName())
+            String identifier = authentication.getName();
+            User admin = userRepository.findByUsername(identifier)
+                    .or(() -> userRepository.findByEmail(identifier))
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             admin.setFullName(fullName);
@@ -458,7 +463,9 @@ public class AdminController {
                                  Authentication authentication,
                                  RedirectAttributes redirectAttributes) {
         try {
-            User admin = userRepository.findByUsername(authentication.getName())
+            String identifier = authentication.getName();
+            User admin = userRepository.findByUsername(identifier)
+                    .or(() -> userRepository.findByEmail(identifier))
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             if (!passwordEncoder.matches(currentPassword, admin.getPassword())) {

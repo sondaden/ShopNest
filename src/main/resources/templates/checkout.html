@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate address fields
         if (!provinceInput.value || !districtInput.value || !wardInput.value) {
             e.preventDefault();
-            alert('Vui lòng chọn đầy đủ địa chỉ giao hàng');
+            window.showToast('Vui lòng chọn đầy đủ địa chỉ giao hàng', 'warning');
             return false;
         }
     });

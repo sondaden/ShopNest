@@ -22,10 +22,19 @@
                     <div class="card-body text-center py-4">
                         <div class="avatar-wrapper mb-3">
                             <img th:src="${user?.avatarUrl != null ? user.avatarUrl : 'https://ui-avatars.com/api/?name=' + (user?.fullName ?: 'User') + '&background=0d6efd&color=fff&size=100'}" 
-                                 alt="Avatar" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
+                                 alt="Avatar" class="rounded-circle avatar-img" id="avatarPreview" width="100" height="100" style="object-fit: cover;">
+                            <label for="avatarInput" class="avatar-edit btn btn-primary btn-sm" title="Thay đổi ảnh đại diện">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
                         </div>
                         <h5 class="fw-bold mb-1" th:text="${user?.fullName ?: 'Người dùng'}">Nguyễn Văn A</h5>
-                        <p class="text-muted small mb-0" th:text="${user?.email}">user@email.com</p>
+                        <p class="text-muted small mb-2" th:text="${user?.email}">user@email.com</p>
+                        
+                        <!-- Form upload avatar ẩn -->
+                        <form th:action="@{/profile/upload-avatar}" method="post" enctype="multipart/form-data" id="avatarForm" class="d-none">
+                            <input type="file" name="avatarFile" id="avatarInput" accept="image/*" onchange="previewAndSubmit(this)">
+                        </form>
+                        <small class="text-muted d-block">Click vào icon máy ảnh để đổi avatar</small>
                     </div>
                     <div class="list-group list-group-flush">
                         <a th:href="@{/profile}" class="list-group-item list-group-item-action active">
@@ -83,12 +92,6 @@
                                     <input type="tel" class="form-control" id="phone" name="phone" 
                                            th:value="${user?.phone}" placeholder="0901 234 567">
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="avatarUrl" class="form-label">URL Ảnh đại diện</label>
-                                    <input type="url" class="form-control" id="avatarUrl" name="avatarUrl" 
-                                           th:value="${user?.avatarUrl}" placeholder="https://example.com/avatar.jpg">
-                                    <small class="text-muted">Để trống sẽ sử dụng avatar mặc định</small>
-                                </div>
                             </div>
 
                             <hr class="my-4">
@@ -144,6 +147,14 @@
     position: relative;
     display: inline-block;
 }
+.avatar-img {
+    border: 3px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+.avatar-wrapper:hover .avatar-img {
+    border-color: #0d6efd;
+    opacity: 0.9;
+}
 .avatar-edit {
     position: absolute;
     bottom: 0;
@@ -156,12 +167,91 @@
     align-items: center;
     justify-content: center;
     border: 2px solid #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.avatar-edit:hover {
+    transform: scale(1.1);
 }
 .list-group-item.active {
     background-color: #0d6efd;
     border-color: #0d6efd;
 }
 </style>
+
+<script>
+function previewAndSubmit(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showLocalToast('Kích thước file không được vượt quá 5MB', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showLocalToast('Vui lòng chọn file ảnh', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Preview image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Submit form
+        if (confirm('Bạn có muốn cập nhật ảnh đại diện này?')) {
+            document.getElementById('avatarForm').submit();
+        } else {
+            // Reset preview if cancelled
+            input.value = '';
+            location.reload();
+        }
+    }
+}
+
+function showLocalToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? 'linear-gradient(135deg, #28a745, #20c997)' :
+                    type === 'error' ? 'linear-gradient(135deg, #dc3545, #e74c3c)' :
+                    type === 'warning' ? 'linear-gradient(135deg, #ffc107, #ffb300)' :
+                    'linear-gradient(135deg, #17a2b8, #138496)';
+    
+    toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${bgColor};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        z-index: 9999;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    `;
+    document.head.appendChild(style);
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
 
 </body>
 </html>

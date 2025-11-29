@@ -216,6 +216,43 @@
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
 <script>
+// Inline showConfirm function
+function showConfirm(message, options = {}) {
+    return new Promise((resolve) => {
+        const { title = 'Xác nhận', confirmText = 'Xác nhận', cancelText = 'Hủy', type = 'warning' } = options;
+        const colors = { warning: { bg: '#f59e0b', hover: '#d97706' }, danger: { bg: '#ef4444', hover: '#dc2626' }, info: { bg: '#3b82f6', hover: '#2563eb' } };
+        const color = colors[type] || colors.warning;
+        
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
+        overlay.innerHTML = `
+            <div style="background:white;border-radius:16px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:scaleIn 0.2s ease-out;">
+                <div style="text-align:center;margin-bottom:20px;">
+                    <div style="width:60px;height:60px;border-radius:50%;background:${color.bg}15;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size:28px;color:${color.bg};"></i>
+                    </div>
+                    <h5 style="margin:0 0 8px;font-weight:600;color:#1f2937;">${title}</h5>
+                    <p style="margin:0;color:#6b7280;font-size:0.95rem;">${message}</p>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <button id="confirmCancel" style="flex:1;padding:12px 20px;border-radius:10px;border:1px solid #e5e7eb;background:white;color:#374151;font-weight:500;cursor:pointer;">${cancelText}</button>
+                    <button id="confirmOk" style="flex:1;padding:12px 20px;border-radius:10px;border:none;background:${color.bg};color:white;font-weight:500;cursor:pointer;">${confirmText}</button>
+                </div>
+            </div>
+        `;
+        if (!document.getElementById('confirm-style')) {
+            const style = document.createElement('style');
+            style.id = 'confirm-style';
+            style.textContent = '@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}@keyframes scaleIn{from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}}';
+            document.head.appendChild(style);
+        }
+        document.body.appendChild(overlay);
+        overlay.querySelector('#confirmOk').onclick = () => { overlay.remove(); resolve(true); };
+        overlay.querySelector('#confirmCancel').onclick = () => { overlay.remove(); resolve(false); };
+        overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } };
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Xử lý tăng số lượng
     document.querySelectorAll('.btn-increase').forEach(btn => {
@@ -255,9 +292,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Xử lý xóa sản phẩm
     document.querySelectorAll('.btn-remove').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', async function() {
             const itemId = this.dataset.itemId;
-            if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+            const confirmed = await showConfirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?', {
+                title: 'Xóa sản phẩm',
+                confirmText: 'Xóa',
+                cancelText: 'Hủy',
+                type: 'danger'
+            });
+            if (confirmed) {
                 removeItem(itemId);
             }
         });
@@ -278,12 +321,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reload page to update totals
                 location.reload();
             } else {
-                alert(data.error || 'Có lỗi xảy ra');
+                window.showToast(data.error || 'Có lỗi xảy ra', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Có lỗi xảy ra khi cập nhật giỏ hàng');
+            window.showToast('Có lỗi xảy ra khi cập nhật giỏ hàng', 'error');
         });
     }
 
@@ -301,12 +344,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 location.reload();
             } else {
-                alert(data.error || 'Có lỗi xảy ra');
+                window.showToast(data.error || 'Có lỗi xảy ra', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Có lỗi xảy ra khi xóa sản phẩm');
+            window.showToast('Có lỗi xảy ra khi xóa sản phẩm', 'error');
         });
     }
 });

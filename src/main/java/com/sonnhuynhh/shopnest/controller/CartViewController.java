@@ -158,8 +158,10 @@ public class CartViewController {
             model.addAttribute("cart", cart);
             model.addAttribute("cartItems", cart.items());
             
-            // Lấy thông tin user hiện tại để điền sẵn form
-            User currentUser = userRepository.findByUsername(authentication.getName())
+            // Lấy thông tin user hiện tại để điền sẵn form (hỗ trợ cả OAuth2)
+            String identifier = authentication.getName();
+            User currentUser = userRepository.findByUsername(identifier)
+                    .or(() -> userRepository.findByEmail(identifier))
                     .orElse(null);
             model.addAttribute("currentUser", currentUser);
             

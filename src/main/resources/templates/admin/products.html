@@ -110,7 +110,7 @@
                                     <a th:href="@{'/admin/products/edit/' + ${product.id}}" class="btn btn-sm btn-outline-primary" title="Sửa">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form th:action="@{'/admin/products/delete/' + ${product.id}}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
+                                    <form th:action="@{'/admin/products/delete/' + ${product.id}}" method="post" style="display:inline" class="delete-form">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -178,11 +178,18 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteSelected.disabled = checked === 0;
     }
 
-    // Delete single product
-    document.querySelectorAll('.delete-product').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-                // TODO: Call API to delete
+    // Delete single product with custom confirm
+    document.querySelectorAll('.delete-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const confirmed = await window.showConfirm('Bạn có chắc muốn xóa sản phẩm này? Hành động này không thể hoàn tác.', {
+                title: 'Xóa sản phẩm',
+                confirmText: 'Xóa',
+                cancelText: 'Hủy',
+                type: 'danger'
+            });
+            if (confirmed) {
+                this.submit();
             }
         });
     });

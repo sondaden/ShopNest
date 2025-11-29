@@ -25,41 +25,173 @@
      * Show toast notification
      */
     function showToast(message, type = 'success') {
+        console.log('showToast called:', message, type);
+        
         // Create toast container if not exists
         let container = document.querySelector('.toast-container');
         if (!container) {
             container = document.createElement('div');
             container.className = 'toast-container';
+            container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
             document.body.appendChild(container);
         }
 
-        // Create toast element
-        const toastId = 'toast-' + Date.now();
-        const iconClass = type === 'success' ? 'bi-check-circle-fill text-success' : 
-                         type === 'error' ? 'bi-exclamation-circle-fill text-danger' :
-                         'bi-info-circle-fill text-info';
+        // Define icons and colors for each type
+        const icons = {
+            success: '<i class="bi bi-check-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
+            error: '<i class="bi bi-x-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
+            info: '<i class="bi bi-info-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
+            warning: '<i class="bi bi-exclamation-triangle-fill" style="font-size:1.25rem;margin-right:12px;"></i>'
+        };
+        
+        const colors = {
+            success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+        };
 
-        const toastHtml = `
-            <div id="${toastId}" class="toast show fade-in" role="alert">
-                <div class="toast-header">
-                    <i class="bi ${iconClass} me-2"></i>
-                    <strong class="me-auto">ShopNest</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                </div>
-                <div class="toast-body">${message}</div>
-            </div>
+        // Create toast element with inline styles
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            display:flex;align-items:center;padding:14px 20px;border-radius:12px;
+            background:${colors[type] || colors.info};color:white;font-weight:500;
+            box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:280px;max-width:400px;
+            animation:slideInRight 0.4s ease-out;
         `;
+        toast.innerHTML = `
+            ${icons[type] || icons.info}
+            <span style="flex:1;">${message}</span>
+            <button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:1.25rem;padding:0;margin-left:12px;">
+                <i class="bi bi-x"></i>
+            </button>
+        `;
+        
+        // Add animation keyframes if not exists
+        if (!document.getElementById('toast-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animation-style';
+            style.textContent = '@keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}';
+            document.head.appendChild(style);
+        }
 
-        container.insertAdjacentHTML('beforeend', toastHtml);
+        container.appendChild(toast);
 
         // Auto remove after 3 seconds
         setTimeout(() => {
-            const toast = document.getElementById(toastId);
-            if (toast) {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
+            if (toast.parentElement) {
+                toast.remove();
             }
         }, 3000);
+    }
+
+    /**
+     * Show custom confirm dialog
+     */
+    function showConfirm(message, options = {}) {
+        return new Promise((resolve) => {
+            const {
+                title = 'Xác nhận',
+                confirmText = 'Xác nhận',
+                cancelText = 'Hủy',
+                type = 'warning' // warning, danger, info
+            } = options;
+            
+            const colors = {
+                warning: { bg: '#f59e0b', hover: '#d97706' },
+                danger: { bg: '#ef4444', hover: '#dc2626' },
+                info: { bg: '#3b82f6', hover: '#2563eb' }
+            };
+            
+            const color = colors[type] || colors.warning;
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position:fixed;top:0;left:0;right:0;bottom:0;
+                background:rgba(0,0,0,0.5);z-index:10000;
+                display:flex;align-items:center;justify-content:center;
+                animation:fadeIn 0.2s ease-out;
+            `;
+            
+            // Create dialog
+            overlay.innerHTML = `
+                <div style="
+                    background:white;border-radius:16px;padding:24px;
+                    max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);
+                    animation:scaleIn 0.2s ease-out;
+                ">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <div style="
+                            width:60px;height:60px;border-radius:50%;
+                            background:${color.bg}15;margin:0 auto 16px;
+                            display:flex;align-items:center;justify-content:center;
+                        ">
+                            <i class="bi bi-exclamation-triangle-fill" style="font-size:28px;color:${color.bg};"></i>
+                        </div>
+                        <h5 style="margin:0 0 8px;font-weight:600;color:#1f2937;">${title}</h5>
+                        <p style="margin:0;color:#6b7280;font-size:0.95rem;">${message}</p>
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <button id="confirmCancel" style="
+                            flex:1;padding:12px 20px;border-radius:10px;
+                            border:1px solid #e5e7eb;background:white;
+                            color:#374151;font-weight:500;cursor:pointer;
+                            transition:all 0.2s;
+                        ">${cancelText}</button>
+                        <button id="confirmOk" style="
+                            flex:1;padding:12px 20px;border-radius:10px;
+                            border:none;background:${color.bg};
+                            color:white;font-weight:500;cursor:pointer;
+                            transition:all 0.2s;
+                        ">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+            
+            // Add animation keyframes
+            if (!document.getElementById('confirm-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'confirm-animation-style';
+                style.textContent = `
+                    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+                    @keyframes scaleIn{from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(overlay);
+            
+            // Handle buttons
+            const okBtn = overlay.querySelector('#confirmOk');
+            const cancelBtn = overlay.querySelector('#confirmCancel');
+            
+            okBtn.onmouseover = () => okBtn.style.background = color.hover;
+            okBtn.onmouseout = () => okBtn.style.background = color.bg;
+            cancelBtn.onmouseover = () => cancelBtn.style.background = '#f3f4f6';
+            cancelBtn.onmouseout = () => cancelBtn.style.background = 'white';
+            
+            okBtn.onclick = () => {
+                overlay.remove();
+                resolve(true);
+            };
+            
+            cancelBtn.onclick = () => {
+                overlay.remove();
+                resolve(false);
+            };
+            
+            // Close on overlay click
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                    resolve(false);
+                }
+            };
+            
+            // Focus cancel button
+            cancelBtn.focus();
+        });
     }
 
     /**
@@ -129,6 +261,7 @@
      * Add product to cart
      */
     async function addToCart(productId, quantity = 1) {
+        console.log('addToCart called with productId:', productId, 'quantity:', quantity);
         try {
             showLoading();
             
@@ -141,9 +274,12 @@
                 body: `productId=${productId}&quantity=${quantity}`
             });
 
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
             
             if (response.ok && data.success) {
+                console.log('Calling showToast success');
                 showToast('Đã thêm vào giỏ hàng!', 'success');
                 updateCartBadge(data.cartCount);
             } else if (response.status === 401) {
@@ -190,9 +326,14 @@
      * Remove item from cart
      */
     async function removeFromCart(itemId) {
-        if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-            return;
-        }
+        const confirmed = await showConfirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?', {
+            title: 'Xóa sản phẩm',
+            confirmText: 'Xóa',
+            cancelText: 'Hủy',
+            type: 'danger'
+        });
+        
+        if (!confirmed) return;
 
         try {
             showLoading();
@@ -267,16 +408,25 @@
     // Event Listeners
     // ============================================
 
-    document.addEventListener('DOMContentLoaded', function() {
+    function initEventListeners() {
+        console.log('initEventListeners called');
+        
         // Initialize navbar scroll effect
         initNavbarScrollEffect();
 
         // Add to cart buttons
-        document.querySelectorAll('.btn-add-cart').forEach(btn => {
+        const addToCartButtons = document.querySelectorAll('.btn-add-cart');
+        console.log('Found add-to-cart buttons:', addToCartButtons.length);
+        
+        addToCartButtons.forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 const productId = this.dataset.productId;
-                addToCart(productId);
+                console.log('Add to cart clicked, productId:', productId);
+                if (productId) {
+                    addToCart(productId);
+                }
             });
         });
 
@@ -351,7 +501,15 @@
         });
 
         console.log('ShopNest initialized successfully!');
-    });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEventListeners);
+    } else {
+        // DOM already loaded
+        initEventListeners();
+    }
 
     // ============================================
     // Expose functions globally if needed
@@ -361,11 +519,13 @@
         removeFromCart,
         updateCartItem,
         showToast,
+        showConfirm,
         formatCurrency
     };
 
-    // Also expose showToast globally for product-detail page
+    // Also expose functions globally
     window.showToast = showToast;
+    window.showConfirm = showConfirm;
     window.addToCart = addToCart;
     window.updateCartBadge = updateCartBadge;
 

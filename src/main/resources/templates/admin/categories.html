@@ -71,8 +71,7 @@
                                                     data-bs-toggle="modal" data-bs-target="#categoryModal" title="Sửa">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <form th:action="@{'/admin/categories/delete/' + ${cat.id}}" method="post" style="display:inline" 
-                                                  onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');">
+                                            <form th:action="@{'/admin/categories/delete/' + ${cat.id}}" method="post" style="display:inline" class="delete-category-form">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
@@ -160,6 +159,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Edit category - fill modal with data
@@ -178,6 +178,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('categoryId').value = '';
         document.getElementById('categoryName').value = '';
         document.getElementById('categoryDescription').value = '';
+    });
+    
+    // Delete category with custom confirm
+    document.querySelectorAll('.delete-category-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const confirmed = await window.showConfirm('Bạn có chắc muốn xóa danh mục này? Tất cả sản phẩm trong danh mục sẽ bị ảnh hưởng.', {
+                title: 'Xóa danh mục',
+                confirmText: 'Xóa',
+                cancelText: 'Hủy',
+                type: 'danger'
+            });
+            if (confirmed) {
+                this.submit();
+            }
+        });
     });
 });
 </script>

@@ -3,6 +3,7 @@ package com.sonnhuynhh.shopnest.controller;
 import com.sonnhuynhh.shopnest.dto.OrderResponse;
 import com.sonnhuynhh.shopnest.model.User;
 import com.sonnhuynhh.shopnest.repository.UserRepository;
+import com.sonnhuynhh.shopnest.service.FileUploadService;
 import com.sonnhuynhh.shopnest.service.OrderService;
 import com.sonnhuynhh.shopnest.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Collections;
@@ -30,6 +32,24 @@ public class UserViewController {
     private final OrderService orderService;
     private final ProductService productService;
     private final PasswordEncoder passwordEncoder;
+    private final FileUploadService fileUploadService;
+
+    /**
+     * Helper method để tìm user (hỗ trợ cả OAuth2 users)
+     */
+    private User findCurrentUser(Authentication authentication) {
+        String identifier = authentication.getName();
+        return userRepository.findByUsername(identifier)
+                .or(() -> userRepository.findByEmail(identifier))
+                .orElse(null);
+    }
+    
+    private User findCurrentUserOrThrow(Authentication authentication) {
+        String identifier = authentication.getName();
+        return userRepository.findByUsername(identifier)
+                .or(() -> userRepository.findByEmail(identifier))
+                .orElseThrow(() -> new RuntimeException("User not found: " + identifier));
+    }
 
     /**
      * Trang thông tin cá nhân
@@ -42,8 +62,7 @@ public class UserViewController {
         }
 
         try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElse(null);
+            User user = findCurrentUser(authentication);
             model.addAttribute("user", user);
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
@@ -152,8 +171,7 @@ public class UserViewController {
         }
         
         try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElse(null);
+            User user = findCurrentUser(authentication);
             model.addAttribute("user", user);
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
@@ -176,8 +194,7 @@ public class UserViewController {
         }
         
         try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            User user = findCurrentUserOrThrow(authentication);
             
             user.setFullName(fullName);
             user.setPhone(phone);
@@ -189,6 +206,41 @@ public class UserViewController {
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật thông tin thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/profile";
+    }
+    
+    /**
+     * Upload avatar
+     */
+    @PostMapping("/profile/upload-avatar")
+    public String uploadAvatar(@RequestParam("avatarFile") MultipartFile file,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttributes) {
+        if (authentication == null || !authentication.isAuthenticated() 
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return "redirect:/login";
+        }
+        
+        try {
+            User user = findCurrentUserOrThrow(authentication);
+            
+            // Xóa avatar cũ nếu có (chỉ xóa file upload, không xóa URL external)
+            String oldAvatar = user.getAvatarUrl();
+            if (oldAvatar != null && oldAvatar.startsWith("/uploads/")) {
+                fileUploadService.deleteFile(oldAvatar);
+            }
+            
+            // Upload avatar mới
+            String avatarPath = fileUploadService.uploadAvatar(file, user.getId());
+            user.setAvatarUrl(avatarPath);
+            userRepository.save(user);
+            
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi upload: " + e.getMessage());
         }
         return "redirect:/profile";
     }
@@ -208,8 +260,7 @@ public class UserViewController {
         }
         
         try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            User user = findCurrentUserOrThrow(authentication);
             
             if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng!");

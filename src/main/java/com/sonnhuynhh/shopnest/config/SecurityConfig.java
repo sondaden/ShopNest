@@ -47,6 +47,7 @@ public class SecurityConfig {
                         
                         // Public pages (Thymeleaf views)
                         .requestMatchers("/", "/login", "/register", "/products", "/product/**").permitAll()
+                        .requestMatchers("/forgot-password", "/forgot-password/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         
                         // Public API endpoints
@@ -86,7 +87,7 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
-                        .failureUrl("/login?error=true")
+                        .failureUrl("/login?oauth2error=true")
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

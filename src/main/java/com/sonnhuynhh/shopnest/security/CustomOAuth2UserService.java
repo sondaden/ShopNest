@@ -29,22 +29,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
+        try {
+            OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String provider = userRequest.getClientRegistration().getRegistrationId(); // google, facebook
-        String providerId = oAuth2User.getAttribute("sub"); // Google uses "sub" as user ID
-        String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
-        String picture = oAuth2User.getAttribute("picture");
+            String provider = userRequest.getClientRegistration().getRegistrationId(); // google, facebook
+            String providerId = oAuth2User.getAttribute("sub"); // Google uses "sub" as user ID
+            String email = oAuth2User.getAttribute("email");
+            String name = oAuth2User.getAttribute("name");
+            String picture = oAuth2User.getAttribute("picture");
 
-        logger.info("OAuth2 Login - Provider: {}, Email: {}, ProviderId: {}", provider, email, providerId);
+            logger.info("OAuth2 Login - Provider: {}, Email: {}, ProviderId: {}", provider, email, providerId);
 
-        User user = processOAuth2User(provider, providerId, email, name, picture);
-        
-        logger.info("OAuth2 User processed - ID: {}, Username: {}, Email: {}", 
-                    user.getId(), user.getUsername(), user.getEmail());
+            User user = processOAuth2User(provider, providerId, email, name, picture);
+            
+            logger.info("OAuth2 User processed - ID: {}, Username: {}, Email: {}", 
+                        user.getId(), user.getUsername(), user.getEmail());
 
-        return new CustomOAuth2User(oAuth2User, provider, email);
+            return new CustomOAuth2User(oAuth2User, provider, email);
+        } catch (Exception e) {
+            logger.error("OAuth2 Login Error: ", e);
+            throw new OAuth2AuthenticationException("OAuth2 authentication failed: " + e.getMessage());
+        }
     }
     
     private User processOAuth2User(String provider, String providerId, String email, String name, String picture) {

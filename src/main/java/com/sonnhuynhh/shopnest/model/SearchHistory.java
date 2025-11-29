@@ -19,6 +19,7 @@ public class SearchHistory {
     @Column(nullable = false, length = 255)
     private String keyword;
 
+    @Builder.Default
     private int searchCount = 1;
 
     @Column(name = "last_searched_at")

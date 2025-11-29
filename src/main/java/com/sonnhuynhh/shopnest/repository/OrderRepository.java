@@ -17,6 +17,9 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserId(Long userId);
     List<Order> findAllByOrderByCreatedAtDesc();
+    
+    // Find by order code
+    java.util.Optional<Order> findByOrderCode(String orderCode);
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
     
     // Count by status

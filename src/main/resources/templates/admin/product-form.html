@@ -7,6 +7,139 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/admin.css}" href="/css/admin.css" rel="stylesheet">
+    <style>
+        .upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #0d6efd;
+            background: #e7f1ff;
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .upload-zone:hover i {
+            color: #0d6efd;
+        }
+        .image-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .image-preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: #f8f9fa;
+        }
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .image-preview-item:hover img {
+            transform: scale(1.05);
+        }
+        .image-preview-item .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .image-preview-item:hover .overlay {
+            opacity: 1;
+        }
+        .image-preview-item .overlay button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .image-preview-item .primary-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+        }
+        .image-preview-item .order-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .image-preview-item .uploading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-progress {
+            width: 60%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .upload-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+            transition: width 0.3s ease;
+        }
+        .file-input-hidden {
+            display: none;
+        }
+        .image-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #495057;
+        }
+    </style>
 </head>
 <body>
 
@@ -24,8 +157,10 @@
         </header>
 
         <div class="admin-content">
-            <form th:action="@{/admin/products/save}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/admin/products/save}" method="post" id="productForm">
                 <input type="hidden" name="productId" th:value="${product?.id}">
+                <!-- Hidden container for image URLs -->
+                <div id="hiddenImageUrls"></div>
                 
                 <div class="row g-4">
                     <div class="col-lg-8">
@@ -40,23 +175,75 @@
                                     <input type="text" class="form-control" id="name" name="name" th:value="${product?.name}" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="imageUrl" class="form-label">URL Hình ảnh</label>
-                                    <input type="text" class="form-control" id="imageUrl" name="imageUrl" th:value="${product?.imageUrl}" placeholder="https://example.com/image.jpg">
-                                </div>
-                                <div class="mb-3">
                                     <label for="description" class="form-label">Mô tả sản phẩm</label>
                                     <textarea class="form-control" id="description" name="description" rows="5" th:text="${product?.description}"></textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Image Preview -->
-                        <div class="card border-0 shadow-sm mb-4" th:if="${product?.imageUrl}">
-                            <div class="card-header bg-white border-0 py-3">
-                                <h6 class="fw-bold mb-0">Hình ảnh hiện tại</h6>
+                        <!-- Image Upload Section -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0">
+                                    <i class="bi bi-images me-2"></i>Hình ảnh sản phẩm
+                                </h6>
+                                <div class="image-count" id="imageCount">
+                                    <i class="bi bi-image"></i>
+                                    <span id="imageCountNumber">0</span> ảnh
+                                </div>
                             </div>
                             <div class="card-body">
-                                <img th:src="${product.imageUrl}" class="img-fluid rounded" style="max-height: 200px;" alt="Product">
+                                <!-- Upload Zone -->
+                                <div class="upload-zone" id="uploadZone">
+                                    <i class="bi bi-cloud-arrow-up"></i>
+                                    <h6 class="mb-2">Kéo thả ảnh vào đây hoặc click để chọn</h6>
+                                    <p class="text-muted small mb-0">Hỗ trợ: JPG, PNG, GIF, WebP (Tối đa 5MB/ảnh)</p>
+                                    <input type="file" id="fileInput" class="file-input-hidden" multiple accept="image/*">
+                                </div>
+                                
+                                <div class="alert alert-info small mt-3 mb-0" id="imageHint">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Ảnh đầu tiên sẽ là ảnh chính của sản phẩm. Kéo thả để sắp xếp thứ tự.
+                                </div>
+
+                                <!-- Image Previews Grid -->
+                                <div class="image-preview-grid" id="imagePreviewGrid">
+                                    <!-- Existing images when editing -->
+                                    <th:block th:if="${productImages != null}">
+                                        <div th:each="img, iterStat : ${productImages}" 
+                                             class="image-preview-item" 
+                                             th:data-url="${img.imageUrl}"
+                                             draggable="true">
+                                            <img th:src="${img.imageUrl}" alt="Product Image" onerror="this.src='/images/no-image.svg'">
+                                            <span class="primary-badge" th:if="${iterStat.first}">
+                                                <i class="bi bi-star-fill me-1"></i>Chính
+                                            </span>
+                                            <span class="order-badge" th:text="${iterStat.count}">1</span>
+                                            <div class="overlay">
+                                                <button type="button" class="btn-set-primary bg-success text-white" title="Đặt làm ảnh chính" th:if="${!iterStat.first}">
+                                                    <i class="bi bi-star"></i>
+                                                </button>
+                                                <button type="button" class="btn-remove bg-danger text-white" title="Xóa ảnh">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </th:block>
+                                    
+                                    <!-- Single existing image for backwards compatibility -->
+                                    <th:block th:if="${(productImages == null or productImages.isEmpty()) and product?.imageUrl != null}">
+                                        <div class="image-preview-item" th:data-url="${product.imageUrl}" draggable="true">
+                                            <img th:src="${product.imageUrl}" alt="Product Image" onerror="this.src='/images/no-image.svg'">
+                                            <span class="primary-badge"><i class="bi bi-star-fill me-1"></i>Chính</span>
+                                            <span class="order-badge">1</span>
+                                            <div class="overlay">
+                                                <button type="button" class="btn-remove bg-danger text-white" title="Xóa ảnh">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </th:block>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -104,7 +291,7 @@
 
                         <!-- Actions -->
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                                 <i class="bi bi-check-lg me-2"></i>
                                 <span th:text="${product?.id != null ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}">Thêm sản phẩm</span>
                             </button>
@@ -120,51 +307,284 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.getElementById('name');
-    const slugInput = document.getElementById('slug');
-    const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+    const hiddenImageUrls = document.getElementById('hiddenImageUrls');
+    const imageCountNumber = document.getElementById('imageCountNumber');
+    const submitBtn = document.getElementById('submitBtn');
 
-    // Auto generate slug from name
-    nameInput.addEventListener('input', function() {
-        if (!slugInput.value) {
-            slugInput.value = this.value
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd')
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)/g, '');
-        }
+    // Initialize with existing images
+    updateImageCount();
+    updateHiddenInputs();
+
+    // Click to upload
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
     });
 
-    // Image preview
-    imageInput.addEventListener('change', function() {
-        Array.from(this.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const col = document.createElement('div');
-                col.className = 'col-3';
-                col.innerHTML = `
-                    <div class="position-relative">
-                        <img src="${e.target.result}" class="img-fluid rounded" alt="Preview">
-                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-image">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </div>
-                `;
-                imagePreview.appendChild(col);
-            };
-            reader.readAsDataURL(file);
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = '';
+    });
+
+    // Handle file upload
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                showToast('Chỉ chấp nhận file ảnh!', 'error');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File ' + file.name + ' vượt quá 5MB!', 'error');
+                return;
+            }
+            uploadFile(file);
         });
-    });
+    }
 
-    // Remove image
-    imagePreview.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-image')) {
-            e.target.closest('.col-3').remove();
+    // Upload single file
+    function uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Create preview with loading state
+        const previewItem = createPreviewItem(null, true);
+        imagePreviewGrid.appendChild(previewItem);
+
+        // Create local preview while uploading
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewItem.querySelector('img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        fetch('/api/upload/image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                previewItem.dataset.url = data.url;
+                previewItem.querySelector('img').src = data.url;
+                previewItem.querySelector('.uploading-overlay')?.remove();
+                previewItem.draggable = true;
+                
+                updateImageCount();
+                updateHiddenInputs();
+                updateBadges();
+                showToast('Upload thành công!', 'success');
+            } else {
+                previewItem.remove();
+                showToast(data.error || 'Lỗi upload!', 'error');
+            }
+        })
+        .catch(error => {
+            previewItem.remove();
+            showToast('Lỗi kết nối server!', 'error');
+            console.error('Upload error:', error);
+        });
+    }
+
+    // Create preview item
+    function createPreviewItem(url, isUploading = false) {
+        const div = document.createElement('div');
+        div.className = 'image-preview-item';
+        if (url) div.dataset.url = url;
+        
+        div.innerHTML = `
+            <img src="${url || '/images/no-image.svg'}" alt="Product Image" onerror="this.src='/images/no-image.svg'">
+            <span class="order-badge">0</span>
+            <div class="overlay">
+                <button type="button" class="btn-set-primary bg-success text-white" title="Đặt làm ảnh chính">
+                    <i class="bi bi-star"></i>
+                </button>
+                <button type="button" class="btn-remove bg-danger text-white" title="Xóa ảnh">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            ${isUploading ? `
+                <div class="uploading-overlay">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <div class="upload-progress">
+                        <div class="upload-progress-bar" style="width: 50%"></div>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        return div;
+    }
+
+    // Event delegation for preview grid
+    imagePreviewGrid.addEventListener('click', function(e) {
+        const item = e.target.closest('.image-preview-item');
+        if (!item) return;
+
+        if (e.target.closest('.btn-remove')) {
+            item.remove();
+            updateImageCount();
+            updateHiddenInputs();
+            updateBadges();
+            showToast('Đã xóa ảnh', 'info');
+        }
+
+        if (e.target.closest('.btn-set-primary')) {
+            imagePreviewGrid.insertBefore(item, imagePreviewGrid.firstChild);
+            updateBadges();
+            updateHiddenInputs();
+            showToast('Đã đặt làm ảnh chính', 'success');
         }
     });
+
+    // Update order badges and primary badge
+    function updateBadges() {
+        const items = imagePreviewGrid.querySelectorAll('.image-preview-item');
+        items.forEach((item, index) => {
+            const orderBadge = item.querySelector('.order-badge');
+            if (orderBadge) orderBadge.textContent = index + 1;
+
+            let primaryBadge = item.querySelector('.primary-badge');
+            const setPrimaryBtn = item.querySelector('.btn-set-primary');
+            
+            if (index === 0) {
+                if (!primaryBadge) {
+                    primaryBadge = document.createElement('span');
+                    primaryBadge.className = 'primary-badge';
+                    primaryBadge.innerHTML = '<i class="bi bi-star-fill me-1"></i>Chính';
+                    item.appendChild(primaryBadge);
+                }
+                if (setPrimaryBtn) setPrimaryBtn.style.display = 'none';
+            } else {
+                if (primaryBadge) primaryBadge.remove();
+                if (setPrimaryBtn) setPrimaryBtn.style.display = '';
+            }
+        });
+    }
+
+    // Update image count
+    function updateImageCount() {
+        const count = imagePreviewGrid.querySelectorAll('.image-preview-item[data-url]').length;
+        imageCountNumber.textContent = count;
+    }
+
+    // Update hidden inputs for form submission
+    function updateHiddenInputs() {
+        hiddenImageUrls.innerHTML = '';
+        const items = imagePreviewGrid.querySelectorAll('.image-preview-item[data-url]');
+        items.forEach(item => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'imageUrls';
+            input.value = item.dataset.url;
+            hiddenImageUrls.appendChild(input);
+        });
+    }
+
+    // Form submit validation
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        const uploadingItems = imagePreviewGrid.querySelectorAll('.uploading-overlay');
+        if (uploadingItems.length > 0) {
+            e.preventDefault();
+            showToast('Vui lòng đợi upload hoàn tất!', 'warning');
+            return false;
+        }
+        updateHiddenInputs();
+    });
+
+    // Drag and drop sorting
+    let draggedItem = null;
+    
+    imagePreviewGrid.addEventListener('dragstart', function(e) {
+        if (e.target.classList.contains('image-preview-item')) {
+            draggedItem = e.target;
+            e.target.style.opacity = '0.5';
+        }
+    });
+
+    imagePreviewGrid.addEventListener('dragend', function(e) {
+        if (e.target.classList.contains('image-preview-item')) {
+            e.target.style.opacity = '';
+            draggedItem = null;
+            updateBadges();
+            updateHiddenInputs();
+        }
+    });
+
+    imagePreviewGrid.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const target = e.target.closest('.image-preview-item');
+        if (target && target !== draggedItem && draggedItem) {
+            const rect = target.getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
+            if (e.clientX < midX) {
+                target.parentNode.insertBefore(draggedItem, target);
+            } else {
+                target.parentNode.insertBefore(draggedItem, target.nextSibling);
+            }
+        }
+    });
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;';
+            document.body.appendChild(container);
+        }
+
+        const colors = {
+            success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+        };
+
+        const icons = {
+            success: 'bi-check-circle-fill',
+            error: 'bi-x-circle-fill',
+            info: 'bi-info-circle-fill',
+            warning: 'bi-exclamation-triangle-fill'
+        };
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            display:flex;align-items:center;padding:14px 20px;border-radius:12px;
+            background:${colors[type]};color:white;font-weight:500;margin-bottom:10px;
+            box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:250px;
+            animation:slideIn 0.3s ease;
+        `;
+        toast.innerHTML = `<i class="bi ${icons[type]} me-2"></i><span>${message}</span>`;
+
+        if (!document.getElementById('toast-style')) {
+            const style = document.createElement('style');
+            style.id = 'toast-style';
+            style.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+            document.head.appendChild(style);
+        }
+
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
 });
 </script>
 

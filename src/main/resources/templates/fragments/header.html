@@ -19,7 +19,8 @@
 <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top" id="mainNavbar">
     <div class="container">
         <a class="navbar-brand fw-bold d-flex align-items-center" th:href="@{/}">
-            <i class="bi bi-shop me-2"></i>ShopNest
+            <img th:src="@{/images/logo.png}" alt="ShopNest" style="height: 40px;" class="me-2">
+            <span class="d-none d-sm-inline">ShopNest</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>

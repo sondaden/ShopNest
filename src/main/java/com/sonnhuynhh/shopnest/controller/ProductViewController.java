@@ -149,6 +149,10 @@ public class ProductViewController {
             Product product = productService.getProductById(id);
             model.addAttribute("product", product);
             
+            // Lấy danh sách ảnh của sản phẩm
+            var productImages = productService.getProductImages(id);
+            model.addAttribute("productImages", productImages);
+            
             // Lấy sản phẩm liên quan (cùng category)
             if (product.getCategory() != null) {
                 List<Product> relatedProducts = productService.getAllProducts().stream()

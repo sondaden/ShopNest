@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -38,6 +40,10 @@ public class Product {
 
     @Column(length = 255)
     private String imageUrl;
+    
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC")
+    private List<ProductImage> images = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
@@ -118,6 +124,31 @@ public class Product {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    public List<ProductImage> getImages() { return images; }
+    public void setImages(List<ProductImage> images) { this.images = images; }
+    
+    public void addImage(ProductImage image) {
+        images.add(image);
+        image.setProduct(this);
+    }
+    
+    public void removeImage(ProductImage image) {
+        images.remove(image);
+        image.setProduct(null);
+    }
+    
+    // Lấy ảnh chính (primary) hoặc ảnh đầu tiên
+    public String getPrimaryImageUrl() {
+        if (images != null && !images.isEmpty()) {
+            return images.stream()
+                    .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                    .findFirst()
+                    .map(ProductImage::getImageUrl)
+                    .orElse(images.get(0).getImageUrl());
+        }
+        return imageUrl; // Fallback to old imageUrl field
+    }
 
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }

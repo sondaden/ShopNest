@@ -44,20 +44,32 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Static resources
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         
                         // Public pages (Thymeleaf views)
                         .requestMatchers("/", "/login", "/register", "/products", "/product/**").permitAll()
                         .requestMatchers("/forgot-password", "/forgot-password/**").permitAll()
+                        .requestMatchers("/payment/momo/return").permitAll()
                         .requestMatchers("/error").permitAll()
                         
                         // Public API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/upload/**").hasRole("ADMIN")
+                        .requestMatchers("/api/payment/momo/ipn").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/brands/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers("/api/search/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/coupons/valid").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/coupons/validate").authenticated()
+                        
+                        // Wishlist - requires authentication
+                        .requestMatchers("/api/wishlist/**").authenticated()
 
                         // ADMIN only
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/coupons/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")

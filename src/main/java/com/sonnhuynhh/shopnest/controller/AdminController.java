@@ -147,7 +147,11 @@ public class AdminController {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Product not found"));
         
+        // Lấy danh sách ảnh của sản phẩm
+        var productImages = productService.getProductImages(id);
+        
         model.addAttribute("product", product);
+        model.addAttribute("productImages", productImages);
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("isEdit", true);
         model.addAttribute("activePage", "products");
@@ -155,10 +159,35 @@ public class AdminController {
     }
 
     @PostMapping("/products/save")
-    public String saveProduct(@ModelAttribute ProductRequest productRequest, 
+    public String saveProduct(@RequestParam String name,
+                              @RequestParam java.math.BigDecimal price,
+                              @RequestParam Integer stock,
+                              @RequestParam(required = false) String description,
+                              @RequestParam(required = false) String imageUrl,
+                              @RequestParam(required = false) List<String> imageUrls,
+                              @RequestParam Long categoryId,
+                              @RequestParam(required = false) Long brandId,
+                              @RequestParam(required = false) Double rating,
                               @RequestParam(required = false) Long productId,
                               RedirectAttributes redirectAttributes) {
         try {
+            // Lọc các URL rỗng
+            List<String> validImageUrls = null;
+            if (imageUrls != null) {
+                validImageUrls = imageUrls.stream()
+                        .filter(url -> url != null && !url.trim().isEmpty())
+                        .toList();
+            }
+            
+            // Nếu không có danh sách ảnh nhưng có imageUrl đơn lẻ
+            if ((validImageUrls == null || validImageUrls.isEmpty()) && imageUrl != null && !imageUrl.trim().isEmpty()) {
+                validImageUrls = List.of(imageUrl.trim());
+            }
+            
+            ProductRequest productRequest = new ProductRequest(
+                    name, price, stock, description, imageUrl, validImageUrls, categoryId, brandId, rating
+            );
+            
             if (productId != null) {
                 productService.updateProduct(productId, productRequest);
                 redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công!");
@@ -259,8 +288,8 @@ public class AdminController {
         // Order status counts
         long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
         long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
-        long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPED);
-        long deliveredCount = orderRepository.countByStatus(OrderStatus.DELIVERED);
+        long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
+        long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
         long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
         
         model.addAttribute("orders", orderPage.getContent());
@@ -369,8 +398,8 @@ public class AdminController {
         // Order status counts
         long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
         long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
-        long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPED);
-        long deliveredCount = orderRepository.countByStatus(OrderStatus.DELIVERED);
+        long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
+        long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
         long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
         
         // Calculate percentages

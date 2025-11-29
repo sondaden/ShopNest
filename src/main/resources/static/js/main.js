@@ -254,6 +254,95 @@
     }
 
     // ============================================
+    // Wishlist Functions
+    // ============================================
+
+    let wishlistProductIds = [];
+
+    /**
+     * Load wishlist product IDs
+     */
+    async function loadWishlistIds() {
+        try {
+            const response = await fetch('/api/wishlist/products');
+            if (response.ok) {
+                wishlistProductIds = await response.json();
+                updateWishlistButtons();
+                updateWishlistBadge();
+            }
+        } catch (error) {
+            console.log('Error loading wishlist:', error);
+        }
+    }
+
+    /**
+     * Toggle wishlist for a product
+     */
+    async function toggleWishlist(productId, button) {
+        try {
+            const response = await fetch(`/api/wishlist/${productId}/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.status === 401) {
+                showToast('Vui lòng đăng nhập để sử dụng danh sách yêu thích', 'warning');
+                setTimeout(() => window.location.href = '/login', 1500);
+                return;
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.added) {
+                    wishlistProductIds.push(parseInt(productId));
+                    button.classList.add('active');
+                    button.querySelector('i')?.classList.replace('bi-heart', 'bi-heart-fill');
+                } else {
+                    wishlistProductIds = wishlistProductIds.filter(id => id !== parseInt(productId));
+                    button.classList.remove('active');
+                    button.querySelector('i')?.classList.replace('bi-heart-fill', 'bi-heart');
+                }
+                updateWishlistBadge();
+                showToast(result.message, 'success');
+            } else {
+                showToast(result.error || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle wishlist error:', error);
+            showToast('Không thể cập nhật danh sách yêu thích', 'error');
+        }
+    }
+
+    /**
+     * Update wishlist buttons state based on loaded IDs
+     */
+    function updateWishlistButtons() {
+        document.querySelectorAll('.btn-wishlist').forEach(btn => {
+            const productId = parseInt(btn.dataset.productId);
+            if (wishlistProductIds.includes(productId)) {
+                btn.classList.add('active');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill');
+                }
+            }
+        });
+    }
+
+    /**
+     * Update wishlist badge count
+     */
+    function updateWishlistBadge() {
+        const badge = document.querySelector('.wishlist-badge');
+        if (badge) {
+            badge.textContent = wishlistProductIds.length;
+            badge.style.display = wishlistProductIds.length > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    // ============================================
     // Cart Functions
     // ============================================
 
@@ -413,6 +502,21 @@
         
         // Initialize navbar scroll effect
         initNavbarScrollEffect();
+        
+        // Load wishlist IDs if logged in
+        loadWishlistIds();
+
+        // Wishlist toggle buttons
+        document.querySelectorAll('.btn-wishlist').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const productId = this.dataset.productId;
+                if (productId) {
+                    toggleWishlist(productId, this);
+                }
+            });
+        });
 
         // Add to cart buttons
         const addToCartButtons = document.querySelectorAll('.btn-add-cart');
@@ -520,7 +624,9 @@
         updateCartItem,
         showToast,
         showConfirm,
-        formatCurrency
+        formatCurrency,
+        toggleWishlist,
+        loadWishlistIds
     };
 
     // Also expose functions globally
@@ -528,5 +634,6 @@
     window.showConfirm = showConfirm;
     window.addToCart = addToCart;
     window.updateCartBadge = updateCartBadge;
+    window.toggleWishlist = toggleWishlist;
 
 })();

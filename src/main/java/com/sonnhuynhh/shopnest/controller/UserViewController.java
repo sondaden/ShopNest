@@ -89,6 +89,9 @@ public class UserViewController {
                         String firstItemName = (order.items() != null && !order.items().isEmpty()) 
                                 ? order.items().get(0).productName() 
                                 : "Không có sản phẩm";
+                        String firstItemImage = (order.items() != null && !order.items().isEmpty()) 
+                                ? order.items().get(0).productImage() 
+                                : null;
                         int itemsCount = (order.items() != null) ? order.items().size() : 0;
                         
                         return new OrderDisplayDto(
@@ -96,6 +99,7 @@ public class UserViewController {
                                 order.orderCode(),
                                 order.createdAt(),
                                 firstItemName,
+                                firstItemImage,
                                 itemsCount,
                                 order.totalAmount(),
                                 order.status() != null ? order.status().name() : "PENDING",
@@ -107,8 +111,19 @@ public class UserViewController {
             model.addAttribute("orders", displayOrders);
             model.addAttribute("totalOrders", displayOrders.size());
             
+            // Order statistics by status
+            long pendingCount = displayOrders.stream().filter(o -> "PENDING".equals(o.status())).count();
+            long shippingCount = displayOrders.stream().filter(o -> "SHIPPING".equals(o.status()) || "CONFIRMED".equals(o.status())).count();
+            long completedCount = displayOrders.stream().filter(o -> "COMPLETED".equals(o.status())).count();
+            long cancelledCount = displayOrders.stream().filter(o -> "CANCELLED".equals(o.status())).count();
+            
+            model.addAttribute("pendingCount", pendingCount);
+            model.addAttribute("shippingCount", shippingCount);
+            model.addAttribute("completedCount", completedCount);
+            model.addAttribute("cancelledCount", cancelledCount);
+            
             // Recommended products
-            model.addAttribute("recommendedProducts", productService.getAllProducts().stream().limit(3).toList());
+            model.addAttribute("recommendedProducts", productService.getAllProducts().stream().limit(4).toList());
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("orders", Collections.emptyList());
@@ -307,6 +322,7 @@ public class UserViewController {
             String code,
             java.time.LocalDateTime createdAt,
             String firstItemName,
+            String firstItemImage,
             int itemsCount,
             java.math.BigDecimal totalAmount,
             String status,

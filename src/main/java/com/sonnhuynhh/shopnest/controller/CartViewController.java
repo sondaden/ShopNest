@@ -2,13 +2,17 @@ package com.sonnhuynhh.shopnest.controller;
 
 import com.sonnhuynhh.shopnest.dto.CartResponse;
 import com.sonnhuynhh.shopnest.dto.CheckoutRequest;
+import com.sonnhuynhh.shopnest.dto.MoMoPaymentResponse;
 import com.sonnhuynhh.shopnest.dto.OrderResponse;
+import com.sonnhuynhh.shopnest.model.Order;
 import com.sonnhuynhh.shopnest.model.PaymentMethod;
 import com.sonnhuynhh.shopnest.model.User;
 import com.sonnhuynhh.shopnest.repository.UserRepository;
 import com.sonnhuynhh.shopnest.service.CartService;
+import com.sonnhuynhh.shopnest.service.MoMoService;
 import com.sonnhuynhh.shopnest.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -24,11 +28,13 @@ import java.util.Map;
  */
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class CartViewController {
 
     private final CartService cartService;
     private final OrderService orderService;
     private final UserRepository userRepository;
+    private final MoMoService moMoService;
 
     /**
      * Trang giỏ hàng
@@ -226,7 +232,34 @@ public class CartViewController {
                     paymentMethodEnum
             );
             
-            // Process checkout
+            // Xử lý thanh toán MoMo
+            if (paymentMethodEnum == PaymentMethod.MOMO) {
+                // Kiểm tra MoMo đã được cấu hình chưa
+                if (!moMoService.isConfigured()) {
+                    redirectAttributes.addFlashAttribute("error", "Thanh toán MoMo chưa được cấu hình. Vui lòng chọn phương thức khác.");
+                    return "redirect:/checkout";
+                }
+                
+                // Tạo đơn hàng (chưa xóa giỏ hàng)
+                Order order = orderService.createOrder(checkoutRequest);
+                
+                // Tạo payment request MoMo
+                MoMoPaymentResponse moMoResponse = moMoService.createPayment(order);
+                
+                if (moMoResponse.isSuccess() && moMoResponse.getPayUrl() != null) {
+                    log.info("Redirecting to MoMo payment: {}", moMoResponse.getPayUrl());
+                    // Xóa giỏ hàng sau khi tạo order thành công
+                    orderService.clearCartAfterPayment();
+                    // Redirect đến trang thanh toán MoMo
+                    return "redirect:" + moMoResponse.getPayUrl();
+                } else {
+                    log.error("MoMo payment creation failed: {}", moMoResponse.getMessage());
+                    redirectAttributes.addFlashAttribute("error", "Không thể tạo thanh toán MoMo: " + moMoResponse.getMessage());
+                    return "redirect:/checkout";
+                }
+            }
+            
+            // Xử lý các phương thức thanh toán khác (COD, Bank Transfer, VNPay)
             OrderResponse order = orderService.checkout(checkoutRequest);
             
             // Redirect to success page with order info
@@ -235,6 +268,7 @@ public class CartViewController {
             return "redirect:/order-success";
             
         } catch (Exception e) {
+            log.error("Checkout failed: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Đặt hàng thất bại: " + e.getMessage());
             return "redirect:/checkout";
         }

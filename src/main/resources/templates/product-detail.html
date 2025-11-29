@@ -4,6 +4,107 @@
     <title>Chi tiết sản phẩm - ShopNest</title>
 </head>
 <body>
+<style>
+    .thumbnail {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .thumbnail:hover {
+        border-color: #0d6efd;
+        transform: scale(1.05);
+    }
+    .thumbnail.active {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+    .main-image-container {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .main-image-container img {
+        transition: transform 0.3s ease;
+    }
+    .main-image-container:hover img {
+        transform: scale(1.02);
+    }
+    
+    /* Star Rating Styles */
+    .star-rating {
+        display: inline-flex;
+        gap: 5px;
+        cursor: pointer;
+    }
+    .star-rating i {
+        color: #ddd;
+        transition: all 0.2s ease;
+    }
+    .star-rating i:hover,
+    .star-rating i.hovered,
+    .star-rating i.selected {
+        color: #ffc107;
+    }
+    .star-rating i.bi-star-fill {
+        color: #ffc107;
+    }
+    
+    /* Review Card Styles */
+    .review-card {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    .review-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .review-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #e9ecef;
+    }
+    .review-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .review-meta {
+        flex-grow: 1;
+    }
+    .review-author {
+        font-weight: 600;
+        color: #2d3436;
+        margin-bottom: 2px;
+    }
+    .review-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .review-stars {
+        color: #ffc107;
+        margin-bottom: 8px;
+    }
+    .review-comment {
+        color: #495057;
+        line-height: 1.6;
+    }
+    .review-actions {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    /* Rating Summary */
+    .rating-summary {
+        background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+    }
+</style>
 
 <!-- Navbar -->
 <nav th:replace="~{fragments/header :: navbar}"></nav>
@@ -32,20 +133,45 @@
                     <!-- Main Image -->
                     <div class="main-image-container mb-3">
                         <img id="mainImage" 
-                             th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.svg'}"
+                             th:src="${productImages != null and !productImages.isEmpty()} ? ${productImages[0].imageUrl} : (${product.imageUrl != null} ? ${product.imageUrl} : '/images/no-image.svg')"
                              class="img-fluid rounded shadow-sm w-100"
                              th:alt="${product.name}"
                              style="max-height: 450px; object-fit: contain; background: #f8f9fa;"
                              onerror="this.src='/images/no-image.svg'">
                     </div>
-                    <!-- Thumbnail Images (for future expansion) -->
-                    <div class="thumbnail-images d-flex gap-2">
-                        <div class="thumbnail active" style="width: 70px; height: 70px;">
-                            <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.svg'}"
-                                 class="img-fluid rounded border"
-                                 style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
-                                 onerror="this.src='/images/no-image.svg'">
-                        </div>
+                    <!-- Thumbnail Images -->
+                    <div class="thumbnail-images d-flex gap-2 flex-wrap">
+                        <!-- Hiển thị tất cả ảnh nếu có -->
+                        <th:block th:if="${productImages != null and !productImages.isEmpty()}">
+                            <div th:each="img, iterStat : ${productImages}" 
+                                 class="thumbnail" 
+                                 th:classappend="${iterStat.first} ? 'active' : ''"
+                                 style="width: 70px; height: 70px;">
+                                <img th:src="${img.imageUrl}"
+                                     th:data-full-url="${img.imageUrl}"
+                                     class="img-fluid rounded border"
+                                     style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                                     onerror="this.src='/images/no-image.svg'">
+                            </div>
+                        </th:block>
+                        <!-- Fallback nếu không có ảnh trong danh sách nhưng có imageUrl -->
+                        <th:block th:if="${(productImages == null or productImages.isEmpty()) and product.imageUrl != null}">
+                            <div class="thumbnail active" style="width: 70px; height: 70px;">
+                                <img th:src="${product.imageUrl}"
+                                     th:data-full-url="${product.imageUrl}"
+                                     class="img-fluid rounded border"
+                                     style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                                     onerror="this.src='/images/no-image.svg'">
+                            </div>
+                        </th:block>
+                        <!-- Hiển thị placeholder nếu không có ảnh -->
+                        <th:block th:if="${(productImages == null or productImages.isEmpty()) and product.imageUrl == null}">
+                            <div class="thumbnail active" style="width: 70px; height: 70px;">
+                                <img src="/images/no-image.svg"
+                                     class="img-fluid rounded border"
+                                     style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </th:block>
                     </div>
                 </div>
             </div>
@@ -249,12 +375,83 @@
                 </div>
                 <!-- Reviews Tab -->
                 <div class="tab-pane fade" id="reviews" role="tabpanel">
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-chat-square-text display-4 mb-3"></i>
-                        <p>Chưa có đánh giá nào cho sản phẩm này.</p>
-                        <button class="btn btn-outline-primary">
-                            <i class="bi bi-pencil me-1"></i>Viết đánh giá đầu tiên
-                        </button>
+                    <div class="row">
+                        <!-- Rating Summary -->
+                        <div class="col-md-4 mb-4">
+                            <div class="rating-summary text-center p-4 bg-light rounded">
+                                <div class="display-4 fw-bold text-warning" id="averageRating">0.0</div>
+                                <div class="rating-stars mb-2" id="averageStars">
+                                    <i class="bi bi-star text-warning"></i>
+                                    <i class="bi bi-star text-warning"></i>
+                                    <i class="bi bi-star text-warning"></i>
+                                    <i class="bi bi-star text-warning"></i>
+                                    <i class="bi bi-star text-warning"></i>
+                                </div>
+                                <small class="text-muted"><span id="totalReviews">0</span> đánh giá</small>
+                                
+                                <!-- Rating Distribution -->
+                                <div class="rating-distribution mt-4">
+                                    <div class="d-flex align-items-center mb-2" th:each="i : ${#numbers.sequence(5, 1, -1)}">
+                                        <span class="me-2" style="width: 20px;" th:text="${i}">5</span>
+                                        <i class="bi bi-star-fill text-warning me-2"></i>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" th:id="'rating-bar-' + ${i}" style="width: 0%"></div>
+                                        </div>
+                                        <span class="ms-2 text-muted small" style="width: 30px;" th:id="'rating-count-' + ${i}">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Review Form & List -->
+                        <div class="col-md-8">
+                            <!-- Write Review Form -->
+                            <div class="review-form card mb-4" id="reviewFormCard">
+                                <div class="card-header bg-white">
+                                    <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Viết đánh giá của bạn</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Đánh giá sao <span class="text-danger">*</span></label>
+                                        <div class="star-rating" id="starRating">
+                                            <i class="bi bi-star fs-4" data-rating="1"></i>
+                                            <i class="bi bi-star fs-4" data-rating="2"></i>
+                                            <i class="bi bi-star fs-4" data-rating="3"></i>
+                                            <i class="bi bi-star fs-4" data-rating="4"></i>
+                                            <i class="bi bi-star fs-4" data-rating="5"></i>
+                                        </div>
+                                        <input type="hidden" id="selectedRating" value="0">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nhận xét</label>
+                                        <textarea class="form-control" id="reviewComment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" id="submitReview">
+                                        <i class="bi bi-send me-2"></i>Gửi đánh giá
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Already Reviewed Message -->
+                            <div class="alert alert-info d-none" id="alreadyReviewedMsg">
+                                <i class="bi bi-info-circle me-2"></i>Bạn đã đánh giá sản phẩm này rồi.
+                            </div>
+                            
+                            <!-- Login Prompt -->
+                            <div class="alert alert-warning d-none" id="loginPrompt">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <a href="/login" class="alert-link">Đăng nhập</a> để viết đánh giá.
+                            </div>
+                            
+                            <!-- Reviews List -->
+                            <div id="reviewsList">
+                                <div class="text-center py-4 text-muted" id="noReviews">
+                                    <i class="bi bi-chat-square-text display-4 mb-3 d-block"></i>
+                                    <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+                                    <p class="small">Hãy là người đầu tiên đánh giá!</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -308,13 +505,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnAddToCart = document.getElementById('btnAddToCart');
     const btnWishlist = document.getElementById('btnWishlist');
     const maxStock = /*[[${product.stock}]]*/ 10;
+    const productId = /*[[${product.id}]]*/ 0;
+    const isLoggedIn = /*[[${#authentication != null && #authentication.name != 'anonymousUser'}]]*/ false;
 
     // Fallback showToast function if main.js not loaded yet
     function localShowToast(message, type) {
-        console.log('localShowToast called:', message, type);
-        console.log('window.showToast exists:', typeof window.showToast === 'function');
-        
-        // Always create our own toast for reliability
         let container = document.querySelector('.toast-container');
         if (!container) {
             container = document.createElement('div');
@@ -338,21 +533,9 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         const toast = document.createElement('div');
-        toast.style.cssText = `
-            display:flex;align-items:center;padding:14px 20px;border-radius:12px;
-            background:${colors[type] || colors.info};color:white;font-weight:500;
-            box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:280px;max-width:400px;
-            animation:slideInRight 0.4s ease-out;
-        `;
-        toast.innerHTML = `
-            ${icons[type] || icons.info}
-            <span style="flex:1;">${message}</span>
-            <button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:1.25rem;padding:0;margin-left:12px;">
-                <i class="bi bi-x"></i>
-            </button>
-        `;
+        toast.style.cssText = `display:flex;align-items:center;padding:14px 20px;border-radius:12px;background:${colors[type] || colors.info};color:white;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:280px;max-width:400px;animation:slideInRight 0.4s ease-out;`;
+        toast.innerHTML = `${icons[type] || icons.info}<span style="flex:1;">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:1.25rem;padding:0;margin-left:12px;"><i class="bi bi-x"></i></button>`;
         
-        // Add animation keyframes if not exists
         if (!document.getElementById('toast-animation-style')) {
             const style = document.createElement('style');
             style.id = 'toast-animation-style';
@@ -368,9 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (decreaseBtn) {
         decreaseBtn.addEventListener('click', function() {
             let value = parseInt(quantityInput.value) || 1;
-            if (value > 1) {
-                quantityInput.value = value - 1;
-            }
+            if (value > 1) quantityInput.value = value - 1;
         });
     }
 
@@ -378,9 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (increaseBtn) {
         increaseBtn.addEventListener('click', function() {
             let value = parseInt(quantityInput.value) || 1;
-            if (value < maxStock) {
-                quantityInput.value = value + 1;
-            }
+            if (value < maxStock) quantityInput.value = value + 1;
         });
     }
 
@@ -397,22 +576,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add to cart with quantity
     if (btnAddToCart) {
         btnAddToCart.addEventListener('click', function() {
-            const productId = this.dataset.productId;
+            const pId = this.dataset.productId;
             const quantity = parseInt(quantityInput.value) || 1;
             
-            // Call API to add to cart
             fetch('/cart/add', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `productId=${productId}&quantity=${quantity}`
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `productId=${pId}&quantity=${quantity}`
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     localShowToast('Đã thêm ' + quantity + ' sản phẩm vào giỏ hàng!', 'success');
-                    // Update cart badge if exists
                     const badge = document.querySelector('.cart-badge');
                     if (badge && data.cartCount !== undefined) {
                         badge.textContent = data.cartCount;
@@ -452,15 +627,241 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Thumbnail click handler (for future expansion)
+    // Thumbnail click handler
     const thumbnails = document.querySelectorAll('.thumbnail img');
     thumbnails.forEach(thumb => {
         thumb.addEventListener('click', function() {
-            document.getElementById('mainImage').src = this.src;
+            const fullUrl = this.dataset.fullUrl || this.src;
+            document.getElementById('mainImage').src = fullUrl;
             document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
             this.parentElement.classList.add('active');
         });
     });
+
+    // ==================== REVIEW FUNCTIONALITY ====================
+    
+    // Star rating interaction
+    const starRating = document.getElementById('starRating');
+    const selectedRatingInput = document.getElementById('selectedRating');
+    
+    if (starRating) {
+        const stars = starRating.querySelectorAll('i');
+        
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.dataset.rating);
+                stars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.add('hovered');
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('hovered');
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+            
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                selectedRatingInput.value = rating;
+                stars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.add('selected');
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('selected');
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+        });
+        
+        starRating.addEventListener('mouseleave', function() {
+            const selectedRating = parseInt(selectedRatingInput.value) || 0;
+            stars.forEach((s, index) => {
+                s.classList.remove('hovered');
+                if (index < selectedRating) {
+                    s.classList.add('bi-star-fill');
+                    s.classList.remove('bi-star');
+                } else {
+                    s.classList.remove('bi-star-fill');
+                    s.classList.add('bi-star');
+                }
+            });
+        });
+    }
+    
+    // Load reviews and rating
+    function loadReviews() {
+        // Load rating summary
+        fetch(`/api/reviews/product/${productId}/rating`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('averageRating').textContent = data.averageRating.toFixed(1);
+                document.getElementById('totalReviews').textContent = data.totalReviews;
+                
+                // Update average stars
+                const avgStars = document.getElementById('averageStars');
+                avgStars.innerHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= Math.floor(data.averageRating)) {
+                        avgStars.innerHTML += '<i class="bi bi-star-fill text-warning"></i>';
+                    } else if (i - 0.5 <= data.averageRating) {
+                        avgStars.innerHTML += '<i class="bi bi-star-half text-warning"></i>';
+                    } else {
+                        avgStars.innerHTML += '<i class="bi bi-star text-warning"></i>';
+                    }
+                }
+                
+                // Update distribution bars
+                const total = data.totalReviews || 1;
+                for (let i = 1; i <= 5; i++) {
+                    const count = data.ratingDistribution[i] || 0;
+                    const percent = (count / total) * 100;
+                    const bar = document.getElementById(`rating-bar-${i}`);
+                    const countEl = document.getElementById(`rating-count-${i}`);
+                    if (bar) bar.style.width = `${percent}%`;
+                    if (countEl) countEl.textContent = count;
+                }
+            });
+        
+        // Load reviews list
+        fetch(`/api/reviews/product/${productId}`)
+            .then(res => res.json())
+            .then(reviews => {
+                const reviewsList = document.getElementById('reviewsList');
+                const noReviews = document.getElementById('noReviews');
+                
+                if (reviews.length === 0) {
+                    noReviews.classList.remove('d-none');
+                    return;
+                }
+                
+                noReviews.classList.add('d-none');
+                
+                let html = '';
+                reviews.forEach(review => {
+                    const stars = Array(5).fill(0).map((_, i) => 
+                        i < review.rating ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>'
+                    ).join('');
+                    
+                    const date = new Date(review.createdAt).toLocaleDateString('vi-VN', {
+                        day: '2-digit', month: '2-digit', year: 'numeric'
+                    });
+                    
+                    const avatar = review.userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userName)}&background=random`;
+                    
+                    html += `
+                        <div class="review-card" data-review-id="${review.id}">
+                            <div class="review-header">
+                                <img src="${avatar}" class="review-avatar" alt="${review.userName}" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'">
+                                <div class="review-meta">
+                                    <div class="review-author">${review.userName}</div>
+                                    <div class="review-date">${date}</div>
+                                </div>
+                                ${review.isOwner ? `
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteReview(${review.id}); return false;"><i class="bi bi-trash me-2"></i>Xóa đánh giá</a></li>
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="review-stars">${stars}</div>
+                            <div class="review-comment">${review.comment || '<em class="text-muted">Không có nhận xét</em>'}</div>
+                        </div>
+                    `;
+                });
+                
+                reviewsList.innerHTML = html;
+            });
+    }
+    
+    // Check if user can review
+    function checkCanReview() {
+        if (!isLoggedIn) {
+            document.getElementById('reviewFormCard').classList.add('d-none');
+            document.getElementById('loginPrompt').classList.remove('d-none');
+            return;
+        }
+        
+        fetch(`/api/reviews/product/${productId}/has-reviewed`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hasReviewed) {
+                    document.getElementById('reviewFormCard').classList.add('d-none');
+                    document.getElementById('alreadyReviewedMsg').classList.remove('d-none');
+                }
+            });
+    }
+    
+    // Submit review
+    const submitReviewBtn = document.getElementById('submitReview');
+    if (submitReviewBtn) {
+        submitReviewBtn.addEventListener('click', function() {
+            const rating = parseInt(selectedRatingInput.value);
+            const comment = document.getElementById('reviewComment').value.trim();
+            
+            if (rating < 1 || rating > 5) {
+                localShowToast('Vui lòng chọn số sao đánh giá', 'warning');
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+            
+            fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, rating, comment })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localShowToast('Đánh giá thành công!', 'success');
+                    document.getElementById('reviewFormCard').classList.add('d-none');
+                    document.getElementById('alreadyReviewedMsg').classList.remove('d-none');
+                    loadReviews();
+                } else {
+                    localShowToast(data.error || 'Có lỗi xảy ra', 'error');
+                }
+            })
+            .catch(() => localShowToast('Có lỗi xảy ra', 'error'))
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-send me-2"></i>Gửi đánh giá';
+            });
+        });
+    }
+    
+    // Delete review function
+    window.deleteReview = function(reviewId) {
+        if (!confirm('Bạn có chắc muốn xóa đánh giá này?')) return;
+        
+        fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localShowToast('Đã xóa đánh giá', 'success');
+                    document.getElementById('reviewFormCard').classList.remove('d-none');
+                    document.getElementById('alreadyReviewedMsg').classList.add('d-none');
+                    loadReviews();
+                } else {
+                    localShowToast(data.error || 'Có lỗi xảy ra', 'error');
+                }
+            });
+    };
+    
+    // Initial load
+    loadReviews();
+    checkCanReview();
 });
 </script>
 

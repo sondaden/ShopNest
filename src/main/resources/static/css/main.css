@@ -50,6 +50,16 @@ a:hover {
     z-index: 1050 !important;
 }
 
+/* Navbar Logo */
+.navbar-brand img {
+    filter: brightness(0) invert(1);
+    transition: var(--transition);
+}
+
+.navbar-brand:hover img {
+    filter: brightness(0) invert(1) drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
 .navbar .dropdown-menu {
     z-index: 1051 !important;
 }

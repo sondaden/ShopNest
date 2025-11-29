@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}">
+    <title>Kết quả thanh toán - ShopNest</title>
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav th:replace="~{fragments/header :: navbar}"></nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            <!-- Success State -->
+            <div th:if="${success}" class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <!-- Success Animation -->
+                    <div class="success-animation mb-4">
+                        <div class="success-checkmark">
+                            <div class="check-icon">
+                                <span class="icon-line line-tip"></span>
+                                <span class="icon-line line-long"></span>
+                                <div class="icon-circle"></div>
+                                <div class="icon-fix"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-success mb-3">
+                        <i class="bi bi-check-circle-fill me-2"></i>Thanh toán thành công!
+                    </h2>
+                    
+                    <p class="lead text-muted mb-4" th:text="${message}">
+                        Đơn hàng của bạn đã được thanh toán thành công.
+                    </p>
+                    
+                    <!-- Order Info -->
+                    <div class="bg-light rounded p-4 mb-4">
+                        <div class="row g-3">
+                            <div class="col-6 text-start">
+                                <small class="text-muted">Mã đơn hàng</small>
+                                <p class="fw-bold mb-0" th:text="${orderCode}">SHOP20251130...</p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <small class="text-muted">Mã giao dịch MoMo</small>
+                                <p class="fw-bold mb-0" th:text="${transId}">123456789</p>
+                            </div>
+                            <div class="col-12" th:if="${amount}">
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Số tiền thanh toán:</span>
+                                    <span class="fw-bold text-danger fs-5" 
+                                          th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                        1,000,000 ₫
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method Badge -->
+                    <div class="mb-4">
+                        <span class="badge bg-pink fs-6 px-3 py-2">
+                            <i class="bi bi-wallet2 me-2"></i>Thanh toán qua MoMo
+                        </span>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-center">
+                        <a th:href="@{/order-history}" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="bi bi-list-ul me-2"></i>Xem đơn hàng
+                        </a>
+                        <a th:href="@{/products}" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-cart me-2"></i>Tiếp tục mua sắm
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Failed State -->
+            <div th:unless="${success}" class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <!-- Failed Icon -->
+                    <div class="mb-4">
+                        <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                             style="width: 100px; height: 100px;">
+                            <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-danger mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Thanh toán thất bại
+                    </h2>
+                    
+                    <p class="lead text-muted mb-4" th:text="${message}">
+                        Đã có lỗi xảy ra trong quá trình thanh toán.
+                    </p>
+                    
+                    <!-- Order Info (if available) -->
+                    <div th:if="${orderCode}" class="bg-light rounded p-4 mb-4">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <small class="text-muted">Mã đơn hàng</small>
+                                <p class="fw-bold mb-0" th:text="${orderCode}">SHOP20251130...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Suggestions -->
+                    <div class="alert alert-warning text-start mb-4">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Bạn có thể thử:</h6>
+                        <ul class="mb-0 ps-3">
+                            <li>Kiểm tra số dư ví MoMo của bạn</li>
+                            <li>Thử lại với phương thức thanh toán khác</li>
+                            <li>Liên hệ hỗ trợ nếu vấn đề vẫn tiếp tục</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-center">
+                        <a th:href="@{/checkout}" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-arrow-repeat me-2"></i>Thử lại
+                        </a>
+                        <a th:href="@{/cart}" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="bi bi-cart me-2"></i>Về giỏ hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<style>
+/* MoMo Pink Color */
+.bg-pink {
+    background-color: #ae2070 !important;
+}
+
+/* Success Checkmark Animation */
+.success-animation {
+    display: flex;
+    justify-content: center;
+}
+
+.success-checkmark {
+    width: 100px;
+    height: 100px;
+}
+
+.success-checkmark .check-icon {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    border-radius: 50%;
+    box-sizing: content-box;
+    border: 4px solid #28a745;
+}
+
+.success-checkmark .check-icon::before {
+    top: 3px;
+    left: -2px;
+    width: 30px;
+    transform-origin: 100% 50%;
+    border-radius: 100px 0 0 100px;
+}
+
+.success-checkmark .check-icon::after {
+    top: 0;
+    left: 30px;
+    width: 60px;
+    transform-origin: 0 50%;
+    border-radius: 0 100px 100px 0;
+    animation: rotate-circle 4.25s ease-in;
+}
+
+.success-checkmark .check-icon::before,
+.success-checkmark .check-icon::after {
+    content: '';
+    height: 100px;
+    position: absolute;
+    background: #fff;
+    transform: rotate(-45deg);
+}
+
+.success-checkmark .check-icon .icon-line {
+    height: 5px;
+    background-color: #28a745;
+    display: block;
+    border-radius: 2px;
+    position: absolute;
+    z-index: 10;
+}
+
+.success-checkmark .check-icon .icon-line.line-tip {
+    top: 46px;
+    left: 14px;
+    width: 25px;
+    transform: rotate(45deg);
+    animation: icon-line-tip 0.75s;
+}
+
+.success-checkmark .check-icon .icon-line.line-long {
+    top: 38px;
+    right: 8px;
+    width: 47px;
+    transform: rotate(-45deg);
+    animation: icon-line-long 0.75s;
+}
+
+.success-checkmark .check-icon .icon-circle {
+    top: -4px;
+    left: -4px;
+    z-index: 10;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    position: absolute;
+    box-sizing: content-box;
+    border: 4px solid rgba(40, 167, 69, 0.5);
+}
+
+.success-checkmark .check-icon .icon-fix {
+    top: 8px;
+    width: 5px;
+    left: 26px;
+    z-index: 1;
+    height: 85px;
+    position: absolute;
+    transform: rotate(-45deg);
+    background-color: #fff;
+}
+
+@keyframes rotate-circle {
+    0% {
+        transform: rotate(-45deg);
+    }
+    5% {
+        transform: rotate(-45deg);
+    }
+    12% {
+        transform: rotate(-405deg);
+    }
+    100% {
+        transform: rotate(-405deg);
+    }
+}
+
+@keyframes icon-line-tip {
+    0% {
+        width: 0;
+        left: 1px;
+        top: 19px;
+    }
+    54% {
+        width: 0;
+        left: 1px;
+        top: 19px;
+    }
+    70% {
+        width: 50px;
+        left: -8px;
+        top: 37px;
+    }
+    84% {
+        width: 17px;
+        left: 21px;
+        top: 48px;
+    }
+    100% {
+        width: 25px;
+        left: 14px;
+        top: 45px;
+    }
+}
+
+@keyframes icon-line-long {
+    0% {
+        width: 0;
+        right: 46px;
+        top: 54px;
+    }
+    65% {
+        width: 0;
+        right: 46px;
+        top: 54px;
+    }
+    84% {
+        width: 55px;
+        right: 0px;
+        top: 35px;
+    }
+    100% {
+        width: 47px;
+        right: 8px;
+        top: 38px;
+    }
+}
+</style>
+
+</body>
+</html>

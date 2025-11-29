@@ -74,6 +74,8 @@ public class Order {
 
     @Getter
     private LocalDateTime createdAt;
+    
+    @Getter
     private LocalDateTime updatedAt;
 
     @Setter
@@ -93,8 +95,8 @@ public class Order {
         return switch (status) {
             case PENDING -> "Chờ xử lý";
             case CONFIRMED -> "Đã xác nhận";
-            case SHIPPED -> "Đang giao";
-            case DELIVERED -> "Hoàn thành";
+            case SHIPPING -> "Đang giao";
+            case COMPLETED -> "Hoàn thành";
             case CANCELLED -> "Đã hủy";
         };
     }

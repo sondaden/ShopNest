@@ -30,8 +30,6 @@ public class SearchService {
     private final ProductRepository productRepository;
     private final SearchHistoryRepository searchHistoryRepository;
     private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
-    private final BrandRepository brandRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String CACHE_SUGGESTIONS = "search:suggestions";
@@ -47,13 +45,6 @@ public class SearchService {
         }
     }
 
-    private String normalize(String input) {
-        if (input == null || input.isBlank()) return null;
-        return VietnameseUtils.removeAccent(input)
-                .replaceAll("\\s+", "")
-                .toLowerCase();
-    }
-
     @Transactional(readOnly = true)
     public SearchResponse search(SearchRequest request) {
         String keyword = request.q() != null ? request.q().trim() : null;
@@ -62,7 +53,7 @@ public class SearchService {
         Pageable pageable = PageRequest.of(request.page(), request.size(), request.sort().getSort());
 
         // Bắt đầu với spec = null, sẽ build dần
-        Specification<Product> spec = Specification.where(null);
+        Specification<Product> spec = Specification.allOf();
 
         // 1. Lọc theo categoryId
         if (request.categoryId() != null) {

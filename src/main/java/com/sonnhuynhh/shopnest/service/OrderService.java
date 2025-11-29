@@ -33,6 +33,16 @@ public class OrderService {
 
     // USER: Đặt hàng từ giỏ hàng
     public OrderResponse checkout(CheckoutRequest request) {
+        Order order = createOrder(request);
+        
+        // XÓA GIỎ HÀNG SAU KHI ĐẶT THÀNH CÔNG
+        cartService.clearCart();
+
+        return mapToResponse(order);
+    }
+    
+    // Tạo order mà không xóa giỏ hàng (dùng cho MoMo payment)
+    public Order createOrder(CheckoutRequest request) {
         User user = getCurrentUser();
         CartResponse cart = cartService.getCart();
 
@@ -68,12 +78,18 @@ public class OrderService {
             order.getItems().add(orderItem);
         }
 
-        orderRepository.save(order);
-
-        // XÓA GIỎ HÀNG SAU KHI ĐẶT THÀNH CÔNG
+        return orderRepository.save(order);
+    }
+    
+    // Xóa giỏ hàng (public method cho MoMo callback)
+    public void clearCartAfterPayment() {
         cartService.clearCart();
-
-        return mapToResponse(order);
+    }
+    
+    // Tìm order theo orderCode
+    public Order findByOrderCode(String orderCode) {
+        return orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + orderCode));
     }
 
     // USER: Xem lịch sử đơn hàng
@@ -94,13 +110,59 @@ public class OrderService {
     // ADMIN: Cập nhật trạng thái đơn hàng
     public OrderResponse updateStatus(Long orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
         order.setStatus(status);
-        if (status == OrderStatus.DELIVERED) {
+        if (status == OrderStatus.COMPLETED) {
             order.setPaymentStatus(PaymentStatus.PAID);
         }
+        return mapToResponse(orderRepository.save(order));
+    }
+    
+    // ADMIN: Cập nhật trạng thái thanh toán
+    public OrderResponse updatePaymentStatus(Long orderId, PaymentStatus paymentStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        order.setPaymentStatus(paymentStatus);
+        return mapToResponse(orderRepository.save(order));
+    }
+    
+    // ADMIN: Xem chi tiết đơn hàng
+    public OrderResponse getOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
         return mapToResponse(order);
     }
+    
+    // ADMIN: Thống kê đơn hàng
+    public OrderStatistics getOrderStatistics() {
+        List<Order> allOrders = orderRepository.findAll();
+        
+        long totalOrders = allOrders.size();
+        long pendingOrders = allOrders.stream().filter(o -> o.getStatus() == OrderStatus.PENDING).count();
+        long confirmedOrders = allOrders.stream().filter(o -> o.getStatus() == OrderStatus.CONFIRMED).count();
+        long shippingOrders = allOrders.stream().filter(o -> o.getStatus() == OrderStatus.SHIPPING).count();
+        long completedOrders = allOrders.stream().filter(o -> o.getStatus() == OrderStatus.COMPLETED).count();
+        long cancelledOrders = allOrders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count();
+        
+        java.math.BigDecimal totalRevenue = allOrders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.COMPLETED)
+                .map(Order::getTotalAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        
+        return new OrderStatistics(totalOrders, pendingOrders, confirmedOrders, shippingOrders, 
+                                   completedOrders, cancelledOrders, totalRevenue);
+    }
+    
+    // Statistics DTO
+    public record OrderStatistics(
+        long totalOrders,
+        long pendingOrders,
+        long confirmedOrders,
+        long shippingOrders,
+        long completedOrders,
+        long cancelledOrders,
+        java.math.BigDecimal totalRevenue
+    ) {}
 
     private String generateOrderCode() {
         return "SHOP" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));

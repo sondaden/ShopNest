@@ -84,4 +84,48 @@ public class Order {
     @PrePersist protected void onCreate() { createdAt = updatedAt = LocalDateTime.now(); }
     @PreUpdate protected void onUpdate() { updatedAt = LocalDateTime.now(); }
 
+    // Helper methods for templates
+    public String getCode() {
+        return orderCode;
+    }
+
+    public String getStatusLabel() {
+        return switch (status) {
+            case PENDING -> "Chờ xử lý";
+            case CONFIRMED -> "Đã xác nhận";
+            case SHIPPED -> "Đang giao";
+            case DELIVERED -> "Hoàn thành";
+            case CANCELLED -> "Đã hủy";
+        };
+    }
+
+    public String getPaymentStatusLabel() {
+        return switch (paymentStatus) {
+            case UNPAID -> "Chưa thanh toán";
+            case PAID -> "Đã thanh toán";
+            case REFUNDED -> "Đã hoàn tiền";
+        };
+    }
+
+    public String getPaymentMethodLabel() {
+        return switch (paymentMethod) {
+            case COD -> "Thanh toán khi nhận hàng";
+            case BANK_TRANSFER -> "Chuyển khoản";
+            case MOMO -> "Ví MoMo";
+            case VNPAY -> "VNPay";
+        };
+    }
+
+    // Additional helper methods
+    public String getCustomerPhone() {
+        return phone;
+    }
+
+    public int getItemsCount() {
+        return items != null ? items.size() : 0;
+    }
+
+    public boolean getIsPaid() {
+        return paymentStatus == PaymentStatus.PAID;
+    }
 }

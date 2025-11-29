@@ -12,24 +12,7 @@
 
 <div class="admin-wrapper">
     <!-- Sidebar -->
-    <aside class="admin-sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a th:href="@{/admin}" class="sidebar-brand"><i class="bi bi-shop me-2"></i>ShopNest</a>
-        </div>
-        <nav class="sidebar-nav">
-            <ul class="nav flex-column">
-                <li class="nav-item"><a th:href="@{/admin}" class="nav-link"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
-                <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link"><i class="bi bi-box-seam"></i>Sản phẩm</a></li>
-                <li class="nav-item"><a th:href="@{/admin/categories}" class="nav-link"><i class="bi bi-tags"></i>Danh mục</a></li>
-                <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link active"><i class="bi bi-cart-check"></i>Đơn hàng</a></li>
-                <li class="nav-item"><a th:href="@{/admin/users}" class="nav-link"><i class="bi bi-people"></i>Người dùng</a></li>
-                <li class="nav-item"><a th:href="@{/admin/reports}" class="nav-link"><i class="bi bi-bar-chart"></i>Báo cáo</a></li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <a th:href="@{/}" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-arrow-left me-2"></i>Về trang chủ</a>
-        </div>
-    </aside>
+    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('orders')}"></aside>
 
     <!-- Main Content -->
     <main class="admin-main">
@@ -44,7 +27,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm text-center py-3">
                         <div class="card-body">
-                            <h3 class="fw-bold text-warning mb-1" th:text="${pendingCount ?: 12}">12</h3>
+                            <h3 class="fw-bold text-warning mb-1" th:text="${pendingCount}">0</h3>
                             <small class="text-muted">Chờ xử lý</small>
                         </div>
                     </div>
@@ -52,7 +35,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm text-center py-3">
                         <div class="card-body">
-                            <h3 class="fw-bold text-info mb-1" th:text="${shippingCount ?: 8}">8</h3>
+                            <h3 class="fw-bold text-info mb-1" th:text="${shippingCount}">0</h3>
                             <small class="text-muted">Đang giao</small>
                         </div>
                     </div>
@@ -60,7 +43,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm text-center py-3">
                         <div class="card-body">
-                            <h3 class="fw-bold text-success mb-1" th:text="${completedCount ?: 156}">156</h3>
+                            <h3 class="fw-bold text-success mb-1" th:text="${deliveredCount}">0</h3>
                             <small class="text-muted">Hoàn thành</small>
                         </div>
                     </div>
@@ -68,7 +51,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm text-center py-3">
                         <div class="card-body">
-                            <h3 class="fw-bold text-danger mb-1" th:text="${cancelledCount ?: 3}">3</h3>
+                            <h3 class="fw-bold text-danger mb-1" th:text="${cancelledCount}">0</h3>
                             <small class="text-muted">Đã hủy</small>
                         </div>
                     </div>
@@ -78,33 +61,23 @@
             <!-- Filters -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <form class="row g-3 align-items-end">
-                        <div class="col-md-3">
-                            <label class="form-label">Tìm kiếm</label>
-                            <input type="text" class="form-control" placeholder="Mã đơn, tên khách..." name="keyword">
-                        </div>
-                        <div class="col-md-2">
+                    <form class="row g-3 align-items-end" th:action="@{/admin/orders}" method="get">
+                        <div class="col-md-4">
                             <label class="form-label">Trạng thái</label>
                             <select class="form-select" name="status">
                                 <option value="">Tất cả</option>
-                                <option value="PENDING">Chờ xử lý</option>
-                                <option value="CONFIRMED">Đã xác nhận</option>
-                                <option value="SHIPPING">Đang giao</option>
-                                <option value="COMPLETED">Hoàn thành</option>
-                                <option value="CANCELLED">Đã hủy</option>
+                                <option th:each="s : ${statuses}" 
+                                        th:value="${s.name()}"
+                                        th:text="${s == T(com.sonnhuynhh.shopnest.model.OrderStatus).PENDING ? 'Chờ xử lý' : 
+                                                  s == T(com.sonnhuynhh.shopnest.model.OrderStatus).CONFIRMED ? 'Đã xác nhận' :
+                                                  s == T(com.sonnhuynhh.shopnest.model.OrderStatus).SHIPPED ? 'Đang giao' :
+                                                  s == T(com.sonnhuynhh.shopnest.model.OrderStatus).DELIVERED ? 'Đã giao' : 'Đã hủy'}"
+                                        th:selected="${status == s.name()}">Status</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Từ ngày</label>
-                            <input type="date" class="form-control" name="fromDate">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Đến ngày</label>
-                            <input type="date" class="form-control" name="toDate">
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
-                            <button type="reset" class="btn btn-outline-secondary">Xóa lọc</button>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>Lọc</button>
+                            <a th:href="@{/admin/orders}" class="btn btn-outline-secondary">Xóa lọc</a>
                         </div>
                     </form>
                 </div>
@@ -142,13 +115,9 @@
                                 <span class="badge bg-secondary" th:unless="${order.isPaid}">COD</span>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm status-select" th:data-id="${order.id}" style="width: 130px;">
-                                    <option value="PENDING" th:selected="${order.status == 'PENDING'}">Chờ xử lý</option>
-                                    <option value="CONFIRMED" th:selected="${order.status == 'CONFIRMED'}">Đã xác nhận</option>
-                                    <option value="SHIPPING" th:selected="${order.status == 'SHIPPING'}">Đang giao</option>
-                                    <option value="COMPLETED" th:selected="${order.status == 'COMPLETED'}">Hoàn thành</option>
-                                    <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">Đã hủy</option>
-                                </select>
+                                <span class="badge" 
+                                      th:classappend="'status-' + ${order.status}"
+                                      th:text="${order.statusLabel}">Chờ xử lý</span>
                             </td>
                             <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">28/11/2025</td>
                             <td>
@@ -160,38 +129,31 @@
                                 </button>
                             </td>
                         </tr>
-                        <!-- Sample data when no orders -->
-                        <tr th:if="${orders == null}">
-                            <td class="fw-semibold">SN12345</td>
-                            <td><div>Nguyễn Văn A<br><small class="text-muted">0901234567</small></div></td>
-                            <td>3 sản phẩm</td>
-                            <td class="text-danger fw-semibold">1.250.000 ₫</td>
-                            <td><span class="badge bg-secondary">COD</span></td>
-                            <td>
-                                <select class="form-select form-select-sm" style="width: 130px;">
-                                    <option selected>Chờ xử lý</option>
-                                    <option>Đã xác nhận</option>
-                                    <option>Đang giao</option>
-                                </select>
-                            </td>
-                            <td>28/11/2025 10:30</td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
-                                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i></button>
+                        <tr th:if="${#lists.isEmpty(orders)}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                Không có đơn hàng nào
                             </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                    <div class="text-muted">Hiển thị 1-10 trên <span th:text="${totalOrders ?: 179}">179</span> đơn hàng</div>
-                    <nav>
+                    <div class="text-muted">
+                        Hiển thị <span th:text="${currentPage * 10 + 1}">1</span>-<span th:text="${currentPage * 10 + #lists.size(orders)}">10</span> 
+                        trên <span th:text="${totalItems}">0</span> đơn hàng
+                    </div>
+                    <nav th:if="${totalPages > 1}">
                         <ul class="pagination mb-0">
-                            <li class="page-item disabled"><span class="page-link">Trước</span></li>
-                            <li class="page-item active"><span class="page-link">1</span></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${status})}">Trước</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${i}, status=${status})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${status})}">Sau</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>

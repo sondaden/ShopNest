@@ -66,44 +66,44 @@
                                 <tr th:each="item : ${cartItems}">
                                     <td class="ps-4">
                                         <div class="d-flex align-items-center">
-                                            <a th:href="@{/product/{id}(id=${item.product.id})}">
-                                                <img th:src="${item.product.imageUrl != null ? item.product.imageUrl : '/images/no-image.png'}"
+                                            <a th:href="@{/product/{id}(id=${item.productId})}">
+                                                <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/no-image.svg'}"
                                                      class="rounded me-3"
                                                      style="width: 60px; height: 60px; object-fit: cover;"
-                                                     th:alt="${item.product.name}">
+                                                     th:alt="${item.productName}"
+                                                     onerror="this.src='/images/no-image.svg'">
                                             </a>
                                             <div>
-                                                <a th:href="@{/product/{id}(id=${item.product.id})}" class="text-decoration-none text-dark">
-                                                    <h6 class="mb-0" th:text="${item.product.name}">Tên sản phẩm</h6>
+                                                <a th:href="@{/product/{id}(id=${item.productId})}" class="text-decoration-none text-dark">
+                                                    <h6 class="mb-0" th:text="${item.productName}">Tên sản phẩm</h6>
                                                 </a>
-                                                <small class="text-muted" th:text="${item.product.category?.name}">Danh mục</small>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="text-center align-middle">
-                                        <span th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</span>
+                                        <span th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</span>
                                     </td>
                                     <td class="text-center align-middle">
                                         <div class="input-group input-group-sm justify-content-center" style="width: 120px; margin: 0 auto;">
                                             <button class="btn btn-outline-secondary btn-decrease" type="button"
-                                                    th:data-item-id="${item.id}">
+                                                    th:data-item-id="${item.itemId}">
                                                 <i class="bi bi-dash"></i>
                                             </button>
                                             <input type="number" class="form-control text-center quantity-input"
                                                    th:value="${item.quantity}" min="1" max="99"
-                                                   th:data-item-id="${item.id}">
+                                                   th:data-item-id="${item.itemId}">
                                             <button class="btn btn-outline-secondary btn-increase" type="button"
-                                                    th:data-item-id="${item.id}">
+                                                    th:data-item-id="${item.itemId}">
                                                 <i class="bi bi-plus"></i>
                                             </button>
                                         </div>
                                     </td>
                                     <td class="text-center align-middle fw-bold text-danger">
-                                        <span th:text="${#numbers.formatDecimal(item.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ₫'">200,000 ₫</span>
+                                        <span th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">200,000 ₫</span>
                                     </td>
                                     <td class="text-center align-middle">
                                         <button class="btn btn-sm btn-outline-danger btn-remove"
-                                                th:data-item-id="${item.id}">
+                                                th:data-item-id="${item.itemId}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -116,33 +116,34 @@
                     <div class="d-md-none">
                         <div th:each="item : ${cartItems}" class="cart-item-mobile p-3 border-bottom">
                             <div class="d-flex">
-                                <a th:href="@{/product/{id}(id=${item.product.id})}">
-                                <img th:src="${item.product.imageUrl != null ? item.product.imageUrl : '/images/no-image.png'}"
+                                <a th:href="@{/product/{id}(id=${item.productId})}">
+                                <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/no-image.svg'}"
                                      class="rounded me-3"
                                      style="width: 80px; height: 80px; object-fit: cover;"
-                                     th:alt="${item.product.name}">
+                                     th:alt="${item.productName}"
+                                     onerror="this.src='/images/no-image.svg'">
                             </a>
                                 <div class="flex-grow-1">
-                                    <a th:href="@{/product/{id}(id=${item.product.id})}" class="text-decoration-none text-dark">
-                                        <h6 class="mb-1" th:text="${item.product.name}">Tên sản phẩm</h6>
+                                    <a th:href="@{/product/{id}(id=${item.productId})}" class="text-decoration-none text-dark">
+                                        <h6 class="mb-1" th:text="${item.productName}">Tên sản phẩm</h6>
                                     </a>
-                                    <p class="text-danger fw-bold mb-2" th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</p>
+                                    <p class="text-danger fw-bold mb-2" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</p>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="input-group input-group-sm" style="width: 110px;">
                                             <button class="btn btn-outline-secondary btn-decrease" type="button"
-                                                    th:data-item-id="${item.id}">
+                                                    th:data-item-id="${item.itemId}">
                                                 <i class="bi bi-dash"></i>
                                             </button>
                                             <input type="number" class="form-control text-center quantity-input"
                                                    th:value="${item.quantity}" min="1" max="99"
-                                                   th:data-item-id="${item.id}">
+                                                   th:data-item-id="${item.itemId}">
                                             <button class="btn btn-outline-secondary btn-increase" type="button"
-                                                    th:data-item-id="${item.id}">
+                                                    th:data-item-id="${item.itemId}">
                                                 <i class="bi bi-plus"></i>
                                             </button>
                                         </div>
                                         <button class="btn btn-sm btn-outline-danger btn-remove"
-                                                th:data-item-id="${item.id}">
+                                                th:data-item-id="${item.itemId}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -213,6 +214,103 @@
 
 <!-- Footer -->
 <footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý tăng số lượng
+    document.querySelectorAll('.btn-increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
+            let quantity = parseInt(input.value) + 1;
+            if (quantity > 99) quantity = 99;
+            input.value = quantity;
+            updateQuantity(itemId, quantity);
+        });
+    });
+
+    // Xử lý giảm số lượng
+    document.querySelectorAll('.btn-decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
+            let quantity = parseInt(input.value) - 1;
+            if (quantity < 1) quantity = 1;
+            input.value = quantity;
+            updateQuantity(itemId, quantity);
+        });
+    });
+
+    // Xử lý thay đổi số lượng trực tiếp
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const itemId = this.dataset.itemId;
+            let quantity = parseInt(this.value);
+            if (quantity < 1) quantity = 1;
+            if (quantity > 99) quantity = 99;
+            this.value = quantity;
+            updateQuantity(itemId, quantity);
+        });
+    });
+
+    // Xử lý xóa sản phẩm
+    document.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+                removeItem(itemId);
+            }
+        });
+    });
+
+    // Hàm cập nhật số lượng
+    function updateQuantity(itemId, quantity) {
+        fetch('/cart/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `itemId=${itemId}&quantity=${quantity}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to update totals
+                location.reload();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật giỏ hàng');
+        });
+    }
+
+    // Hàm xóa sản phẩm
+    function removeItem(itemId) {
+        fetch('/cart/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `itemId=${itemId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa sản phẩm');
+        });
+    }
+});
+</script>
 
 </body>
 </html>

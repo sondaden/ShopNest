@@ -15,7 +15,7 @@
             <li class="breadcrumb-item"><a th:href="@{/}"><i class="bi bi-house"></i> Trang chủ</a></li>
             <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
             <li class="breadcrumb-item" th:if="${product.category != null}">
-                <a th:href="@{/products(category=${product.category})}" th:text="${product.category}">Danh mục</a>
+                <a th:href="@{/products(categoryId=${product.category.id})}" th:text="${product.category.name}">Danh mục</a>
             </li>
             <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Tên sản phẩm</li>
         </ol>
@@ -32,19 +32,19 @@
                     <!-- Main Image -->
                     <div class="main-image-container mb-3">
                         <img id="mainImage" 
-                             th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.png'}"
+                             th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.svg'}"
                              class="img-fluid rounded shadow-sm w-100"
                              th:alt="${product.name}"
                              style="max-height: 450px; object-fit: contain; background: #f8f9fa;"
-                             onerror="this.src='/images/no-image.png'">
+                             onerror="this.src='/images/no-image.svg'">
                     </div>
                     <!-- Thumbnail Images (for future expansion) -->
                     <div class="thumbnail-images d-flex gap-2">
                         <div class="thumbnail active" style="width: 70px; height: 70px;">
-                            <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.png'}"
+                            <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.svg'}"
                                  class="img-fluid rounded border"
                                  style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
-                                 onerror="this.src='/images/no-image.png'">
+                                 onerror="this.src='/images/no-image.svg'">
                         </div>
                     </div>
                 </div>
@@ -55,8 +55,8 @@
                 <div class="product-info">
                     <!-- Category & Brand -->
                     <div class="d-flex gap-2 mb-2">
-                        <span th:if="${product.category != null}" class="badge bg-primary" th:text="${product.category}">Category</span>
-                        <span th:if="${product.brand != null}" class="badge bg-secondary" th:text="${product.brand}">Brand</span>
+                        <span th:if="${product.category != null}" class="badge bg-primary" th:text="${product.category.name}">Category</span>
+                        <span th:if="${product.brand != null}" class="badge bg-secondary" th:text="${product.brand.name}">Brand</span>
                     </div>
 
                     <!-- Product Name -->
@@ -138,11 +138,11 @@
                         <div class="row g-3">
                             <div class="col-6" th:if="${product.brand != null}">
                                 <small class="text-muted d-block">Thương hiệu</small>
-                                <strong th:text="${product.brand}">Brand</strong>
+                                <strong th:text="${product.brand.name}">Brand</strong>
                             </div>
                             <div class="col-6" th:if="${product.category != null}">
                                 <small class="text-muted d-block">Danh mục</small>
-                                <strong th:text="${product.category}">Category</strong>
+                                <strong th:text="${product.category.name}">Category</strong>
                             </div>
                             <div class="col-6" th:if="${product.importDate != null}">
                                 <small class="text-muted d-block">Ngày nhập</small>
@@ -226,11 +226,11 @@
                         <tbody>
                             <tr th:if="${product.brand != null}">
                                 <td class="fw-semibold" style="width: 200px;">Thương hiệu</td>
-                                <td th:text="${product.brand}">Brand</td>
+                                <td th:text="${product.brand.name}">Brand</td>
                             </tr>
                             <tr th:if="${product.category != null}">
                                 <td class="fw-semibold">Danh mục</td>
-                                <td th:text="${product.category}">Category</td>
+                                <td th:text="${product.category.name}">Category</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Tình trạng kho</td>
@@ -272,10 +272,10 @@
             <div class="col-6 col-md-4 col-lg-3" th:each="rProduct : ${relatedProducts}">
                 <div class="card product-card h-100 shadow-sm">
                     <a th:href="@{/product/{id}(id=${rProduct.id})}" class="text-decoration-none">
-                        <img th:src="${rProduct.imageUrl != null ? rProduct.imageUrl : '/images/no-image.png'}"
+                        <img th:src="${rProduct.imageUrl != null ? rProduct.imageUrl : '/images/no-image.svg'}"
                              class="card-img-top product-image"
                              th:alt="${rProduct.name}"
-                             onerror="this.src='/images/no-image.png'">
+                             onerror="this.src='/images/no-image.svg'">
                     </a>
                     <div class="card-body d-flex flex-column">
                         <a th:href="@{/product/{id}(id=${rProduct.id})}" class="text-decoration-none text-dark">
@@ -308,6 +308,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnAddToCart = document.getElementById('btnAddToCart');
     const btnWishlist = document.getElementById('btnWishlist');
     const maxStock = /*[[${product.stock}]]*/ 10;
+
+    // Fallback showToast function if main.js not loaded yet
+    function localShowToast(message, type) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            alert(message);
+        }
+    }
 
     // Decrease quantity
     if (decreaseBtn) {
@@ -345,24 +354,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const productId = this.dataset.productId;
             const quantity = parseInt(quantityInput.value) || 1;
             
-            // Use the addToCart function from main.js if available
-            if (typeof addToCart === 'function') {
-                addToCart(productId, quantity);
-            } else {
-                // Fallback: store in localStorage
-                let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-                const existingItem = cart.find(item => item.productId === productId);
-                
-                if (existingItem) {
-                    existingItem.quantity += quantity;
+            // Call API to add to cart
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `productId=${productId}&quantity=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    localShowToast('Đã thêm ' + quantity + ' sản phẩm vào giỏ hàng!', 'success');
+                    // Update cart badge if exists
+                    const badge = document.querySelector('.cart-badge');
+                    if (badge && data.cartCount !== undefined) {
+                        badge.textContent = data.cartCount;
+                        badge.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                    }
+                } else if (data.error && data.error.includes('đăng nhập')) {
+                    localShowToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'error');
+                    setTimeout(() => window.location.href = '/login', 1500);
                 } else {
-                    cart.push({ productId: productId, quantity: quantity });
+                    localShowToast(data.error || 'Không thể thêm vào giỏ hàng', 'error');
                 }
-                
-                localStorage.setItem('cart', JSON.stringify(cart));
-                showToast('Đã thêm ' + quantity + ' sản phẩm vào giỏ hàng!', 'success');
-                updateCartBadge();
-            }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                localShowToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+            });
         });
     }
 
@@ -375,13 +395,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.classList.add('bi-heart-fill');
                 this.classList.remove('btn-outline-danger');
                 this.classList.add('btn-danger');
-                showToast('Đã thêm vào danh sách yêu thích!', 'success');
+                localShowToast('Đã thêm vào danh sách yêu thích!', 'success');
             } else {
                 icon.classList.remove('bi-heart-fill');
                 icon.classList.add('bi-heart');
                 this.classList.remove('btn-danger');
                 this.classList.add('btn-outline-danger');
-                showToast('Đã xóa khỏi danh sách yêu thích!', 'info');
+                localShowToast('Đã xóa khỏi danh sách yêu thích!', 'info');
             }
         });
     }

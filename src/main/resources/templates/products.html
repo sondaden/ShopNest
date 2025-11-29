@@ -47,11 +47,11 @@
                                 <label class="form-label fw-semibold">Danh mục</label>
                                 <div class="category-list">
                                     <div class="form-check" th:each="cat : ${categories}">
-                                        <input class="form-check-input" type="checkbox" 
-                                               name="category" th:value="${cat}" 
-                                               th:id="${'cat-' + cat}"
-                                               th:checked="${selectedCategories != null && selectedCategories.contains(cat)}">
-                                        <label class="form-check-label" th:for="${'cat-' + cat}" th:text="${cat}">Category</label>
+                                        <input class="form-check-input" type="radio" 
+                                               name="categoryId" th:value="${cat.id}" 
+                                               th:id="${'cat-' + cat.id}"
+                                               th:checked="${selectedCategoryId != null && selectedCategoryId == cat.id}">
+                                        <label class="form-check-label" th:for="${'cat-' + cat.id}" th:text="${cat.name}">Category</label>
                                     </div>
                                     <div th:if="${categories == null || categories.empty}" class="text-muted small">
                                         Chưa có danh mục
@@ -89,11 +89,11 @@
                                 <label class="form-label fw-semibold">Thương hiệu</label>
                                 <div class="brand-list" style="max-height: 150px; overflow-y: auto;">
                                     <div class="form-check" th:each="brand : ${brands}">
-                                        <input class="form-check-input" type="checkbox" 
-                                               name="brand" th:value="${brand}"
-                                               th:id="${'brand-' + brand}"
-                                               th:checked="${selectedBrands != null && selectedBrands.contains(brand)}">
-                                        <label class="form-check-label" th:for="${'brand-' + brand}" th:text="${brand}">Brand</label>
+                                        <input class="form-check-input" type="radio" 
+                                               name="brandId" th:value="${brand.id}"
+                                               th:id="${'brand-' + brand.id}"
+                                               th:checked="${selectedBrandId != null && selectedBrandId == brand.id}">
+                                        <label class="form-check-label" th:for="${'brand-' + brand.id}" th:text="${brand.name}">Brand</label>
                                     </div>
                                     <div th:if="${brands == null || brands.empty}" class="text-muted small">
                                         Chưa có thương hiệu
@@ -171,17 +171,24 @@
                 </div>
 
                 <!-- Active Filters -->
-                <div th:if="${keyword != null || selectedCategories != null || minPrice != null}" class="mb-3">
+                <div th:if="${keyword != null || selectedCategoryId != null || minPrice != null || maxPrice != null || selectedBrandId != null}" class="mb-3">
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         <span class="text-muted small">Đang lọc:</span>
                         <span th:if="${keyword != null}" class="badge bg-primary">
-                            <span th:text="${keyword}">Keyword</span>
-                            <a th:href="@{/products}" class="text-white ms-1"><i class="bi bi-x"></i></a>
+                            Từ khóa: <span th:text="${keyword}">Keyword</span>
                         </span>
-                        <span th:each="cat : ${selectedCategories}" class="badge bg-info">
-                            <span th:text="${cat}">Category</span>
-                            <a href="#" class="text-white ms-1"><i class="bi bi-x"></i></a>
+                        <span th:if="${selectedCategoryName != null}" class="badge bg-info">
+                            Danh mục: <span th:text="${selectedCategoryName}">Category</span>
                         </span>
+                        <span th:if="${selectedBrandName != null}" class="badge bg-warning text-dark">
+                            Thương hiệu: <span th:text="${selectedBrandName}">Brand</span>
+                        </span>
+                        <span th:if="${minPrice != null || maxPrice != null}" class="badge bg-success">
+                            Giá: <span th:text="${(minPrice != null ? #numbers.formatDecimal(minPrice, 0, 'COMMA', 0, 'POINT') : '0') + ' - ' + (maxPrice != null ? #numbers.formatDecimal(maxPrice, 0, 'COMMA', 0, 'POINT') : '∞')}">0 - 1,000,000</span> ₫
+                        </span>
+                        <a th:href="@{/products}" class="badge bg-danger text-decoration-none">
+                            <i class="bi bi-x-circle me-1"></i>Xóa tất cả
+                        </a>
                     </div>
                 </div>
 
@@ -205,17 +212,14 @@
                         <div class="card product-card h-100 shadow-sm">
                             <div class="position-relative">
                                 <a th:href="@{/product/{id}(id=${product.id})}" class="text-decoration-none">
-                                    <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.png'}"
+                                    <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.svg'}"
                                          class="card-img-top product-image"
                                          th:alt="${product.name}"
-                                         onerror="this.src='/images/no-image.png'">
+                                         onerror="this.src='/images/no-image.svg'">
                                 </a>
                                 <!-- Badges -->
                                 <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1">
-                                    <span th:if="${product.isNew}" class="badge bg-success">Mới</span>
-                                    <span th:if="${product.discount != null && product.discount > 0}" class="badge bg-danger">
-                                        -<span th:text="${product.discount}">10</span>%
-                                    </span>
+                                    <span th:if="${product.stock != null && product.stock > 0}" class="badge bg-success">Còn hàng</span>
                                 </div>
                                 <!-- Quick Actions -->
                                 <div class="product-actions position-absolute top-0 end-0 m-2">
@@ -230,7 +234,7 @@
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <div class="d-flex justify-content-between mb-1">
-                                    <small class="text-muted" th:text="${product.category}">Category</small>
+                                    <small class="text-muted" th:text="${product.categoryName}">Category</small>
                                     <div class="rating" th:if="${product.rating != null}">
                                         <i class="bi bi-star-fill text-warning small"></i>
                                         <small th:text="${product.rating}">4.5</small>
@@ -239,7 +243,6 @@
                                 <a th:href="@{/product/{id}(id=${product.id})}" class="text-decoration-none text-dark">
                                     <h6 class="card-title text-truncate" th:text="${product.name}">Tên sản phẩm</h6>
                                 </a>
-                                <p class="card-text text-muted small text-truncate-2" th:text="${product.description}">Mô tả sản phẩm</p>
                                 <div class="mt-auto">
                                     <div class="d-flex align-items-center mb-2">
                                         <span class="text-danger fw-bold" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</span>

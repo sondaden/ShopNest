@@ -21,9 +21,23 @@
                     </div>
 
                     <!-- Error Message -->
-                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="bi bi-exclamation-circle me-2"></i>
-                        <span th:text="${error}">Sai tên đăng nhập hoặc mật khẩu</span>
+                        Sai tên đăng nhập hoặc mật khẩu
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Logout Message -->
+                    <div th:if="${param.logout}" class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Bạn đã đăng xuất thành công
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Registered Message -->
+                    <div th:if="${param.registered}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Đăng ký thành công! Vui lòng đăng nhập.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
 
@@ -93,12 +107,9 @@
                             <hr class="flex-grow-1">
                         </div>
                         <div class="d-grid gap-2">
-                            <button class="btn btn-outline-danger">
-                                <i class="bi bi-google me-2"></i>Google
-                            </button>
-                            <button class="btn btn-outline-primary">
-                                <i class="bi bi-facebook me-2"></i>Facebook
-                            </button>
+                            <a th:href="@{/oauth2/authorization/google}" class="btn btn-outline-danger">
+                                <i class="bi bi-google me-2"></i>Đăng nhập bằng Google
+                            </a>
                         </div>
                     </div>
                 </div>

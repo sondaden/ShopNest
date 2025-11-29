@@ -29,6 +29,10 @@ public class User {
     @Column(columnDefinition = "ENUM('USER','ADMIN') DEFAULT 'USER'")
     private Role role = Role.USER;
 
+    // OAuth2 fields
+    private String provider; // google, facebook, local
+    private String providerId; // ID from OAuth2 provider
+
     @Column(name = "is_active")
     private boolean active = true;
 
@@ -135,5 +139,21 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
     }
 }

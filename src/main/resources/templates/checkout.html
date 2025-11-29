@@ -72,24 +72,24 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
-                                <select class="form-select" name="province" id="province" required>
-                                    <option value="">Chọn tỉnh/thành</option>
-                                    <option value="HCM">TP. Hồ Chí Minh</option>
-                                    <option value="HN">Hà Nội</option>
-                                    <option value="DN">Đà Nẵng</option>
+                                <select class="form-select" id="provinceSelect" required>
+                                    <option value="">Đang tải...</option>
                                 </select>
+                                <input type="hidden" name="province" id="province">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Quận/Huyện <span class="text-danger">*</span></label>
-                                <select class="form-select" name="district" id="district" required>
+                                <select class="form-select" id="districtSelect" required>
                                     <option value="">Chọn quận/huyện</option>
                                 </select>
+                                <input type="hidden" name="district" id="district">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Phường/Xã <span class="text-danger">*</span></label>
-                                <select class="form-select" name="ward" id="ward" required>
+                                <select class="form-select" id="wardSelect" required>
                                     <option value="">Chọn phường/xã</option>
                                 </select>
+                                <input type="hidden" name="ward" id="ward">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Địa chỉ cụ thể <span class="text-danger">*</span></label>
@@ -233,28 +233,22 @@
                     <div class="order-items mb-3" style="max-height: 250px; overflow-y: auto;">
                         <div th:each="item : ${cartItems}" class="d-flex align-items-center mb-3 pb-3 border-bottom">
                             <div class="position-relative">
-                                <img th:src="${item.product.imageUrl}" class="rounded" 
-                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/no-image.svg'}" class="rounded" 
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     onerror="this.src='/images/no-image.svg'">
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
                                       th:text="${item.quantity}">1</span>
                             </div>
                             <div class="ms-3 flex-grow-1">
-                                <h6 class="mb-0 small" th:text="${item.product.name}">Sản phẩm</h6>
-                                <small class="text-muted" th:text="${item.product.category}">Category</small>
+                                <h6 class="mb-0 small" th:text="${item.productName}">Sản phẩm</h6>
                             </div>
                             <span class="text-danger fw-bold small" 
-                                  th:text="${#numbers.formatDecimal(item.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</span>
+                                  th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</span>
                         </div>
-                        <!-- Demo items if no cart -->
-                        <div th:if="${cartItems == null || cartItems.empty}">
-                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                                <img src="https://via.placeholder.com/60" class="rounded">
-                                <div class="ms-3 flex-grow-1">
-                                    <h6 class="mb-0 small">Sản phẩm mẫu</h6>
-                                    <small class="text-muted">Danh mục</small>
-                                </div>
-                                <span class="text-danger fw-bold small">500,000 ₫</span>
-                            </div>
+                        <!-- Empty state -->
+                        <div th:if="${cartItems == null || cartItems.empty}" class="text-center text-muted py-3">
+                            <i class="bi bi-cart-x fs-3 d-block mb-2"></i>
+                            <span>Giỏ hàng trống</span>
                         </div>
                     </div>
 
@@ -270,20 +264,21 @@
                     <div class="border-top pt-3">
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Tạm tính:</span>
-                            <span id="subtotal" th:text="${#numbers.formatDecimal(subtotal ?: 500000, 0, 'COMMA', 0, 'POINT')} + ' ₫'">500,000 ₫</span>
+                            <span id="subtotal" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Phí vận chuyển:</span>
-                            <span id="shippingFee">30,000 ₫</span>
+                            <span id="shippingFee" th:if="${shippingFee == 0}" class="text-success">Miễn phí</span>
+                            <span id="shippingFee" th:if="${shippingFee > 0}" th:text="${#numbers.formatDecimal(shippingFee, 0, 'COMMA', 0, 'POINT')} + ' ₫'">30,000 ₫</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2 discount-row d-none">
+                        <div class="d-flex justify-content-between mb-2 discount-row" th:if="${discount > 0}">
                             <span class="text-muted">Giảm giá:</span>
-                            <span class="text-success" id="discountAmount">-0 ₫</span>
+                            <span class="text-success" id="discountAmount" th:text="'-' + ${#numbers.formatDecimal(discount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">-0 ₫</span>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between mb-3">
                             <span class="fw-bold">Tổng cộng:</span>
-                            <span class="fw-bold text-danger fs-5" id="totalAmount">530,000 ₫</span>
+                            <span class="fw-bold text-danger fs-5" id="totalAmount" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                         </div>
                     </div>
 
@@ -383,6 +378,139 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========== Vietnam Address API ==========
+    const API_URL = 'https://provinces.open-api.vn/api';
+    
+    const provinceSelect = document.getElementById('provinceSelect');
+    const districtSelect = document.getElementById('districtSelect');
+    const wardSelect = document.getElementById('wardSelect');
+    
+    // Hidden inputs for form submission
+    const provinceInput = document.getElementById('province');
+    const districtInput = document.getElementById('district');
+    const wardInput = document.getElementById('ward');
+
+    // Load provinces
+    async function loadProvinces() {
+        try {
+            const response = await fetch(`${API_URL}/p/`);
+            const provinces = await response.json();
+            
+            provinceSelect.innerHTML = '<option value="">Chọn tỉnh/thành</option>';
+            provinces.forEach(province => {
+                const option = document.createElement('option');
+                option.value = province.code;
+                option.textContent = province.name;
+                option.dataset.name = province.name;
+                provinceSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading provinces:', error);
+            // Fallback to static options
+            provinceSelect.innerHTML = `
+                <option value="">Chọn tỉnh/thành</option>
+                <option value="79" data-name="Thành phố Hồ Chí Minh">Thành phố Hồ Chí Minh</option>
+                <option value="01" data-name="Thành phố Hà Nội">Thành phố Hà Nội</option>
+                <option value="48" data-name="Thành phố Đà Nẵng">Thành phố Đà Nẵng</option>
+            `;
+        }
+    }
+
+    // Load districts by province code
+    async function loadDistricts(provinceCode) {
+        districtSelect.innerHTML = '<option value="">Đang tải...</option>';
+        wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+        districtInput.value = '';
+        wardInput.value = '';
+        
+        if (!provinceCode) {
+            districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/p/${provinceCode}?depth=2`);
+            const data = await response.json();
+            
+            districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+            if (data.districts) {
+                data.districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district.code;
+                    option.textContent = district.name;
+                    option.dataset.name = district.name;
+                    districtSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading districts:', error);
+            districtSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+        }
+    }
+
+    // Load wards by district code
+    async function loadWards(districtCode) {
+        wardSelect.innerHTML = '<option value="">Đang tải...</option>';
+        wardInput.value = '';
+        
+        if (!districtCode) {
+            wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/d/${districtCode}?depth=2`);
+            const data = await response.json();
+            
+            wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            if (data.wards) {
+                data.wards.forEach(ward => {
+                    const option = document.createElement('option');
+                    option.value = ward.code;
+                    option.textContent = ward.name;
+                    option.dataset.name = ward.name;
+                    wardSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading wards:', error);
+            wardSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+        }
+    }
+
+    // Event listeners for address selects
+    provinceSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        provinceInput.value = selectedOption.dataset.name || '';
+        loadDistricts(this.value);
+    });
+
+    districtSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        districtInput.value = selectedOption.dataset.name || '';
+        loadWards(this.value);
+    });
+
+    wardSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        wardInput.value = selectedOption.dataset.name || '';
+    });
+
+    // Load provinces on page load
+    loadProvinces();
+
+    // ========== Form validation ==========
+    const checkoutForm = document.getElementById('checkoutForm');
+    checkoutForm.addEventListener('submit', function(e) {
+        // Validate address fields
+        if (!provinceInput.value || !districtInput.value || !wardInput.value) {
+            e.preventDefault();
+            alert('Vui lòng chọn đầy đủ địa chỉ giao hàng');
+            return false;
+        }
+    });
+
+    // ========== Payment & Shipping ==========
     // Show/hide banking details
     const bankingRadio = document.getElementById('banking');
     const bankingDetails = document.getElementById('bankingDetails');
@@ -397,22 +525,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Update shipping fee
+    // Update shipping fee and total
+    const subtotalElement = document.getElementById('subtotal');
+    const shippingFeeElement = document.getElementById('shippingFee');
+    const totalAmountElement = document.getElementById('totalAmount');
+    
+    // Parse subtotal from page
+    function getSubtotal() {
+        const text = subtotalElement ? subtotalElement.textContent : '0';
+        return parseInt(text.replace(/[^\d]/g, '')) || 0;
+    }
+
     document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
         radio.addEventListener('change', function() {
             const fee = parseInt(this.dataset.fee);
-            document.getElementById('shippingFee').textContent = 
-                new Intl.NumberFormat('vi-VN').format(fee) + ' ₫';
+            if (shippingFeeElement) {
+                shippingFeeElement.textContent = new Intl.NumberFormat('vi-VN').format(fee) + ' ₫';
+            }
             updateTotal();
         });
     });
 
     function updateTotal() {
-        const subtotal = 500000; // Get from server
-        const shippingFee = parseInt(document.querySelector('input[name="shippingMethod"]:checked').dataset.fee);
+        const subtotal = getSubtotal();
+        const shippingFee = parseInt(document.querySelector('input[name="shippingMethod"]:checked')?.dataset.fee || 30000);
         const total = subtotal + shippingFee;
-        document.getElementById('totalAmount').textContent = 
-            new Intl.NumberFormat('vi-VN').format(total) + ' ₫';
+        if (totalAmountElement) {
+            totalAmountElement.textContent = new Intl.NumberFormat('vi-VN').format(total) + ' ₫';
+        }
     }
 });
 </script>

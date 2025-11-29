@@ -12,60 +12,7 @@
 
 <div class="admin-wrapper">
     <!-- Sidebar -->
-    <aside class="admin-sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a th:href="@{/admin}" class="sidebar-brand">
-                <i class="bi bi-shop me-2"></i>ShopNest
-            </a>
-            <button class="btn btn-link d-lg-none sidebar-close" id="sidebarClose">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <nav class="sidebar-nav">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a th:href="@{/admin}" class="nav-link">
-                        <i class="bi bi-speedometer2"></i>Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/admin/products}" class="nav-link active">
-                        <i class="bi bi-box-seam"></i>Sản phẩm
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/admin/categories}" class="nav-link">
-                        <i class="bi bi-tags"></i>Danh mục
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/admin/orders}" class="nav-link">
-                        <i class="bi bi-cart-check"></i>Đơn hàng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/admin/users}" class="nav-link">
-                        <i class="bi bi-people"></i>Người dùng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/admin/reports}" class="nav-link">
-                        <i class="bi bi-bar-chart"></i>Báo cáo
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/admin/settings}" class="nav-link">
-                        <i class="bi bi-gear"></i>Cài đặt
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <a th:href="@{/}" class="btn btn-outline-light btn-sm w-100">
-                <i class="bi bi-arrow-left me-2"></i>Về trang chủ
-            </a>
-        </div>
-    </aside>
+    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('products')}"></aside>
 
     <!-- Main Content -->
     <main class="admin-main">
@@ -75,7 +22,7 @@
             </button>
             <h5 class="mb-0 fw-bold">Quản lý sản phẩm</h5>
             <div class="ms-auto">
-                <a th:href="@{/admin/products/new}" class="btn btn-primary">
+                <a th:href="@{/admin/products/add}" class="btn btn-primary">
                     <i class="bi bi-plus-lg me-2"></i>Thêm sản phẩm
                 </a>
             </div>
@@ -85,32 +32,23 @@
             <!-- Filters -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <form class="row g-3 align-items-end">
+                    <form class="row g-3 align-items-end" th:action="@{/admin/products}" method="get">
                         <div class="col-md-4">
                             <label class="form-label">Tìm kiếm</label>
-                            <input type="text" class="form-control" placeholder="Tên sản phẩm, mã SKU..." name="keyword" th:value="${keyword}">
+                            <input type="text" class="form-control" placeholder="Tên sản phẩm..." name="search" th:value="${search}">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Danh mục</label>
-                            <select class="form-select" name="category">
+                            <select class="form-select" name="categoryId">
                                 <option value="">Tất cả danh mục</option>
-                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Danh mục</option>
+                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${categoryId == cat.id}">Danh mục</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Trạng thái</label>
-                            <select class="form-select" name="status">
-                                <option value="">Tất cả</option>
-                                <option value="active">Đang bán</option>
-                                <option value="inactive">Ngừng bán</option>
-                                <option value="outofstock">Hết hàng</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-5">
                             <button type="submit" class="btn btn-primary me-2">
                                 <i class="bi bi-search me-1"></i>Tìm kiếm
                             </button>
-                            <button type="reset" class="btn btn-outline-secondary">Xóa lọc</button>
+                            <a th:href="@{/admin/products}" class="btn btn-outline-secondary">Xóa lọc</a>
                         </div>
                     </form>
                 </div>
@@ -151,34 +89,36 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${product.imageUrl}" class="rounded" width="48" height="48" alt="Product">
+                                    <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://placehold.co/48'}" class="rounded" width="48" height="48" style="object-fit:cover" alt="Product">
                                     <div class="ms-3">
                                         <h6 class="mb-0" th:text="${product.name}">Tên sản phẩm</h6>
-                                        <small class="text-muted" th:text="${'SKU: ' + product.id}">SKU: SP001</small>
+                                        <small class="text-muted" th:text="${'ID: ' + product.id}">ID: 1</small>
                                     </div>
                                 </div>
                             </td>
-                            <td th:text="${product.category}">Thời trang</td>
-                            <td class="text-danger fw-semibold" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + ' ₫'}">590.000 ₫</td>
+                            <td th:text="${product.category != null ? product.category.name : '-'}">-</td>
+                            <td class="text-danger fw-semibold" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</td>
                             <td>
-                                <span th:class="${product.stock < 10 ? 'text-danger fw-bold' : ''}" th:text="${product.stock}">25</span>
+                                <span th:class="${product.stock < 10 ? 'text-danger fw-bold' : ''}" th:text="${product.stock}">0</span>
                             </td>
                             <td>
                                 <span class="badge bg-success" th:if="${product.stock > 0}">Đang bán</span>
-                                <span class="badge bg-secondary" th:if="${product.stock == 0}">Hết hàng</span>
+                                <span class="badge bg-warning" th:if="${product.stock == 0}">Hết hàng</span>
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a th:href="@{'/admin/products/' + ${product.id} + '/edit'}" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                    <a th:href="@{'/admin/products/edit/' + ${product.id}}" class="btn btn-sm btn-outline-primary" title="Sửa">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <button class="btn btn-sm btn-outline-danger delete-product" th:data-id="${product.id}" title="Xóa">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <form th:action="@{'/admin/products/delete/' + ${product.id}}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
-                        <tr th:if="${products == null || #lists.isEmpty(products)}">
+                        <tr th:if="${#lists.isEmpty(products)}">
                             <td colspan="7" class="text-center py-5">
                                 <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
                                 <p class="text-muted mt-2 mb-0">Chưa có sản phẩm nào</p>
@@ -188,14 +128,21 @@
                     </table>
                 </div>
                 <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                    <div class="text-muted">Trang 1 / 10</div>
-                    <nav>
+                    <div class="text-muted">
+                        Trang <span th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages > 0 ? totalPages : 1}">1</span>
+                        (<span th:text="${totalItems}">0</span> sản phẩm)
+                    </div>
+                    <nav th:if="${totalPages > 1}">
                         <ul class="pagination mb-0">
-                            <li class="page-item disabled"><span class="page-link">Trước</span></li>
-                            <li class="page-item active"><span class="page-link">1</span></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/products(page=${currentPage - 1}, search=${search}, categoryId=${categoryId})}">Trước</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/products(page=${i}, search=${search}, categoryId=${categoryId})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/products(page=${currentPage + 1}, search=${search}, categoryId=${categoryId})}">Sau</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>

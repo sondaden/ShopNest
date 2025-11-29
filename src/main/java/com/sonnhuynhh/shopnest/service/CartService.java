@@ -75,6 +75,31 @@ public class CartService {
         return mapToCartResponse(cart);
     }
 
+    public CartResponse removeByItemId(Long itemId) {
+        User user = getCurrentUser();
+        Cart cart = getUserCart(user);
+        cart.getItems().removeIf(item -> item.getId().equals(itemId));
+        return mapToCartResponse(cart);
+    }
+
+    public CartResponse updateQuantity(Long itemId, Integer quantity) {
+        User user = getCurrentUser();
+        Cart cart = getUserCart(user);
+        
+        cart.getItems().stream()
+                .filter(item -> item.getId().equals(itemId))
+                .findFirst()
+                .ifPresent(item -> {
+                    if (quantity <= 0) {
+                        cart.getItems().remove(item);
+                    } else {
+                        item.setQuantity(quantity);
+                    }
+                });
+        
+        return mapToCartResponse(cart);
+    }
+
     public void clearCart() {
         User user = getCurrentUser();
         cartRepository.findByUserId(user.getId())

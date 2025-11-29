@@ -21,11 +21,8 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center py-4">
                         <div class="avatar-wrapper mb-3">
-                            <img th:src="${user?.avatar ?: 'https://ui-avatars.com/api/?name=' + (user?.fullName ?: 'User') + '&background=0d6efd&color=fff&size=100'}" 
-                                 alt="Avatar" class="rounded-circle" width="100" height="100">
-                            <button class="btn btn-sm btn-light avatar-edit" title="Đổi ảnh đại diện">
-                                <i class="bi bi-camera"></i>
-                            </button>
+                            <img th:src="${user?.avatarUrl != null ? user.avatarUrl : 'https://ui-avatars.com/api/?name=' + (user?.fullName ?: 'User') + '&background=0d6efd&color=fff&size=100'}" 
+                                 alt="Avatar" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
                         </div>
                         <h5 class="fw-bold mb-1" th:text="${user?.fullName ?: 'Người dùng'}">Nguyễn Văn A</h5>
                         <p class="text-muted small mb-0" th:text="${user?.email}">user@email.com</p>
@@ -68,7 +65,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
 
-                        <form th:action="@{/profile}" method="post">
+                        <form th:action="@{/profile/update}" method="post">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="fullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
@@ -77,7 +74,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" 
+                                    <input type="email" class="form-control" id="email" 
                                            th:value="${user?.email}" readonly disabled>
                                     <small class="text-muted">Email không thể thay đổi</small>
                                 </div>
@@ -87,34 +84,10 @@
                                            th:value="${user?.phone}" placeholder="0901 234 567">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="birthday" class="form-label">Ngày sinh</label>
-                                    <input type="date" class="form-control" id="birthday" name="birthday" 
-                                           th:value="${user?.birthday}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Giới tính</label>
-                                    <div class="d-flex gap-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="gender" id="male" value="MALE"
-                                                   th:checked="${user?.gender == 'MALE'}">
-                                            <label class="form-check-label" for="male">Nam</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="gender" id="female" value="FEMALE"
-                                                   th:checked="${user?.gender == 'FEMALE'}">
-                                            <label class="form-check-label" for="female">Nữ</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="gender" id="other" value="OTHER"
-                                                   th:checked="${user?.gender == 'OTHER'}">
-                                            <label class="form-check-label" for="other">Khác</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label for="address" class="form-label">Địa chỉ</label>
-                                    <textarea class="form-control" id="address" name="address" rows="2" 
-                                              th:text="${user?.address}" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+                                    <label for="avatarUrl" class="form-label">URL Ảnh đại diện</label>
+                                    <input type="url" class="form-control" id="avatarUrl" name="avatarUrl" 
+                                           th:value="${user?.avatarUrl}" placeholder="https://example.com/avatar.jpg">
+                                    <small class="text-muted">Để trống sẽ sử dụng avatar mặc định</small>
                                 </div>
                             </div>
 

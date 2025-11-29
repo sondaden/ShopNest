@@ -12,24 +12,7 @@
 
 <div class="admin-wrapper">
     <!-- Sidebar -->
-    <aside class="admin-sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a th:href="@{/admin}" class="sidebar-brand"><i class="bi bi-shop me-2"></i>ShopNest</a>
-        </div>
-        <nav class="sidebar-nav">
-            <ul class="nav flex-column">
-                <li class="nav-item"><a th:href="@{/admin}" class="nav-link"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
-                <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link"><i class="bi bi-box-seam"></i>Sản phẩm</a></li>
-                <li class="nav-item"><a th:href="@{/admin/categories}" class="nav-link"><i class="bi bi-tags"></i>Danh mục</a></li>
-                <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link"><i class="bi bi-cart-check"></i>Đơn hàng</a></li>
-                <li class="nav-item"><a th:href="@{/admin/users}" class="nav-link active"><i class="bi bi-people"></i>Người dùng</a></li>
-                <li class="nav-item"><a th:href="@{/admin/reports}" class="nav-link"><i class="bi bi-bar-chart"></i>Báo cáo</a></li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <a th:href="@{/}" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-arrow-left me-2"></i>Về trang chủ</a>
-        </div>
-    </aside>
+    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('users')}"></aside>
 
     <!-- Main Content -->
     <main class="admin-main">
@@ -53,7 +36,7 @@
                                 <i class="bi bi-people"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-0" th:text="${totalUsers ?: 1248}">1,248</h4>
+                                <h4 class="fw-bold mb-0" th:text="${totalUsers}">0</h4>
                                 <small class="text-muted">Tổng người dùng</small>
                             </div>
                         </div>
@@ -66,7 +49,7 @@
                                 <i class="bi bi-person-check"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-0" th:text="${activeUsers ?: 1180}">1,180</h4>
+                                <h4 class="fw-bold mb-0" th:text="${activeUsers}">0</h4>
                                 <small class="text-muted">Đang hoạt động</small>
                             </div>
                         </div>
@@ -76,11 +59,11 @@
                     <div class="card border-0 shadow-sm">
                         <div class="card-body d-flex align-items-center">
                             <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
-                                <i class="bi bi-person-plus"></i>
+                                <i class="bi bi-person-x"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-0" th:text="${newUsersThisMonth ?: 87}">87</h4>
-                                <small class="text-muted">Mới tháng này</small>
+                                <h4 class="fw-bold mb-0" th:text="${inactiveUsers}">0</h4>
+                                <small class="text-muted">Bị khóa</small>
                             </div>
                         </div>
                     </div>
@@ -92,7 +75,7 @@
                                 <i class="bi bi-shield-check"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-0" th:text="${adminCount ?: 3}">3</h4>
+                                <h4 class="fw-bold mb-0" th:text="${adminCount}">0</h4>
                                 <small class="text-muted">Quản trị viên</small>
                             </div>
                         </div>
@@ -103,30 +86,14 @@
             <!-- Filters -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <form class="row g-3 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label">Tìm kiếm</label>
-                            <input type="text" class="form-control" placeholder="Tên, email, số điện thoại..." name="keyword">
+                    <form class="row g-3 align-items-end" th:action="@{/admin/users}" method="get">
+                        <div class="col-md-6">
+                            <label class="form-label">Tìm kiếm theo email</label>
+                            <input type="text" class="form-control" placeholder="Nhập email..." name="search" th:value="${search}">
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Vai trò</label>
-                            <select class="form-select" name="role">
-                                <option value="">Tất cả</option>
-                                <option value="ADMIN">Admin</option>
-                                <option value="USER">Khách hàng</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Trạng thái</label>
-                            <select class="form-select" name="status">
-                                <option value="">Tất cả</option>
-                                <option value="active">Hoạt động</option>
-                                <option value="inactive">Bị khóa</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
-                            <button type="reset" class="btn btn-outline-secondary">Xóa lọc</button>
+                            <a th:href="@{/admin/users}" class="btn btn-outline-secondary">Xóa lọc</a>
                         </div>
                     </form>
                 </div>
@@ -152,30 +119,29 @@
                         <tr th:each="user : ${users}">
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${user.avatarUrl ?: 'https://ui-avatars.com/api/?name=' + user.fullName + '&background=random'}" 
+                                    <img th:src="${user.avatarUrl != null ? user.avatarUrl : 'https://ui-avatars.com/api/?name=' + (user.fullName != null ? user.fullName : user.username) + '&background=random'}" 
                                          class="rounded-circle" width="40" height="40" alt="Avatar">
                                     <div class="ms-3">
-                                        <h6 class="mb-0" th:text="${user.fullName}">Nguyễn Văn A</h6>
+                                        <h6 class="mb-0" th:text="${user.fullName != null ? user.fullName : user.username}">Nguyễn Văn A</h6>
                                         <small class="text-muted" th:text="${'@' + user.username}">@nguyenvana</small>
                                     </div>
                                 </div>
                             </td>
                             <td th:text="${user.email}">user@email.com</td>
-                            <td th:text="${user.phone ?: '-'}">0901234567</td>
+                            <td th:text="${user.phone != null ? user.phone : '-'}">-</td>
                             <td>
                                 <span class="badge bg-danger" th:if="${user.role.name() == 'ADMIN'}">Admin</span>
                                 <span class="badge bg-secondary" th:if="${user.role.name() == 'USER'}">Khách hàng</span>
                             </td>
-                            <td th:text="${user.orderCount ?: 0}">12</td>
+                            <td>-</td>
                             <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" th:checked="${user.isActive}" th:data-id="${user.id}">
-                                </div>
+                                <span class="badge bg-success" th:if="${user.active}">Hoạt động</span>
+                                <span class="badge bg-danger" th:unless="${user.active}">Bị khóa</span>
                             </td>
-                            <td th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">15/10/2025</td>
+                            <td th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">-</td>
                             <td>
                                 <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUserModal" title="Sửa">
+                                    <button class="btn btn-sm btn-outline-primary" title="Sửa">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger" th:if="${user.role.name() != 'ADMIN'}" title="Xóa">
@@ -184,41 +150,31 @@
                                 </div>
                             </td>
                         </tr>
-                        <!-- Sample data -->
-                        <tr th:if="${users == null}">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=random" class="rounded-circle" width="40" height="40">
-                                    <div class="ms-3">
-                                        <h6 class="mb-0">Nguyễn Văn A</h6>
-                                        <small class="text-muted">@nguyenvana</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>nguyenvana@email.com</td>
-                            <td>0901234567</td>
-                            <td><span class="badge bg-secondary">Khách hàng</span></td>
-                            <td>12</td>
-                            <td><div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div></td>
-                            <td>15/10/2025</td>
-                            <td>
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                </div>
+                        <tr th:if="${#lists.isEmpty(users)}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-people fs-1 d-block mb-2"></i>
+                                Không tìm thấy người dùng nào
                             </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                    <div class="text-muted">Hiển thị 1-10 trên <span th:text="${totalUsers ?: 1248}">1,248</span> người dùng</div>
-                    <nav>
+                    <div class="text-muted">
+                        Hiển thị <span th:text="${currentPage * 10 + 1}">1</span>-<span th:text="${currentPage * 10 + #lists.size(users)}">10</span> 
+                        trên <span th:text="${totalItems}">0</span> người dùng
+                    </div>
+                    <nav th:if="${totalPages > 1}">
                         <ul class="pagination mb-0">
-                            <li class="page-item disabled"><span class="page-link">Trước</span></li>
-                            <li class="page-item active"><span class="page-link">1</span></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/users(page=${currentPage - 1}, search=${search})}">Trước</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/users(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/users(page=${currentPage + 1}, search=${search})}">Sau</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>

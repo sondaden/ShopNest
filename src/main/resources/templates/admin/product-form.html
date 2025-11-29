@@ -12,25 +12,7 @@
 
 <div class="admin-wrapper">
     <!-- Sidebar -->
-    <aside class="admin-sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a th:href="@{/admin}" class="sidebar-brand">
-                <i class="bi bi-shop me-2"></i>ShopNest
-            </a>
-        </div>
-        <nav class="sidebar-nav">
-            <ul class="nav flex-column">
-                <li class="nav-item"><a th:href="@{/admin}" class="nav-link"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
-                <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link active"><i class="bi bi-box-seam"></i>Sản phẩm</a></li>
-                <li class="nav-item"><a th:href="@{/admin/categories}" class="nav-link"><i class="bi bi-tags"></i>Danh mục</a></li>
-                <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link"><i class="bi bi-cart-check"></i>Đơn hàng</a></li>
-                <li class="nav-item"><a th:href="@{/admin/users}" class="nav-link"><i class="bi bi-people"></i>Người dùng</a></li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <a th:href="@{/}" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-arrow-left me-2"></i>Về trang chủ</a>
-        </div>
-    </aside>
+    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('products')}"></aside>
 
     <!-- Main Content -->
     <main class="admin-main">
@@ -43,7 +25,7 @@
 
         <div class="admin-content">
             <form th:action="@{/admin/products/save}" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="id" th:value="${product?.id}">
+                <input type="hidden" name="productId" th:value="${product?.id}">
                 
                 <div class="row g-4">
                     <div class="col-lg-8">
@@ -58,8 +40,8 @@
                                     <input type="text" class="form-control" id="name" name="name" th:value="${product?.name}" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="slug" class="form-label">Đường dẫn (slug)</label>
-                                    <input type="text" class="form-control" id="slug" name="slug" th:value="${product?.slug}" placeholder="tu-dong-tao-tu-ten">
+                                    <label for="imageUrl" class="form-label">URL Hình ảnh</label>
+                                    <input type="text" class="form-control" id="imageUrl" name="imageUrl" th:value="${product?.imageUrl}" placeholder="https://example.com/image.jpg">
                                 </div>
                                 <div class="mb-3">
                                     <label for="description" class="form-label">Mô tả sản phẩm</label>
@@ -68,31 +50,13 @@
                             </div>
                         </div>
 
-                        <!-- Images -->
-                        <div class="card border-0 shadow-sm mb-4">
+                        <!-- Image Preview -->
+                        <div class="card border-0 shadow-sm mb-4" th:if="${product?.imageUrl}">
                             <div class="card-header bg-white border-0 py-3">
-                                <h6 class="fw-bold mb-0">Hình ảnh</h6>
+                                <h6 class="fw-bold mb-0">Hình ảnh hiện tại</h6>
                             </div>
                             <div class="card-body">
-                                <div class="upload-zone text-center p-4 border border-2 border-dashed rounded-3" id="uploadZone">
-                                    <i class="bi bi-cloud-upload fs-1 text-muted"></i>
-                                    <p class="mb-2">Kéo thả hình ảnh vào đây hoặc</p>
-                                    <label class="btn btn-outline-primary">
-                                        Chọn hình ảnh
-                                        <input type="file" name="images" multiple accept="image/*" class="d-none" id="imageInput">
-                                    </label>
-                                    <p class="text-muted small mt-2 mb-0">PNG, JPG, WEBP (tối đa 5MB)</p>
-                                </div>
-                                <div class="row g-2 mt-3" id="imagePreview">
-                                    <div class="col-3" th:if="${product?.imageUrl}">
-                                        <div class="position-relative">
-                                            <img th:src="${product.imageUrl}" class="img-fluid rounded" alt="Product">
-                                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <img th:src="${product.imageUrl}" class="img-fluid rounded" style="max-height: 200px;" alt="Product">
                             </div>
                         </div>
                     </div>
@@ -112,15 +76,12 @@
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="comparePrice" class="form-label">Giá gốc (nếu giảm giá)</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="comparePrice" name="comparePrice" min="0">
-                                        <span class="input-group-text">₫</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
                                     <label for="stock" class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" id="stock" name="stock" th:value="${product?.stock ?: 0}" required min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="rating" class="form-label">Đánh giá (0-5)</label>
+                                    <input type="number" class="form-control" id="rating" name="rating" th:value="${product?.rating ?: 0}" min="0" max="5" step="0.1">
                                 </div>
                             </div>
                         </div>
@@ -132,18 +93,11 @@
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="category" name="category" required>
+                                    <label for="categoryId" class="form-label">Danh mục <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="categoryId" name="categoryId" required>
                                         <option value="">Chọn danh mục</option>
-                                        <option th:each="cat : ${categories}" th:value="${cat.name}" th:text="${cat.name}" th:selected="${product?.category == cat.name}">Danh mục</option>
-                                        <option value="Thời trang" th:if="${categories == null}">Thời trang</option>
-                                        <option value="Điện tử" th:if="${categories == null}">Điện tử</option>
-                                        <option value="Gia dụng" th:if="${categories == null}">Gia dụng</option>
+                                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${product?.category?.id == cat.id}">Danh mục</option>
                                     </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="brand" class="form-label">Thương hiệu</label>
-                                    <input type="text" class="form-control" id="brand" name="brand" th:value="${product?.brand}">
                                 </div>
                             </div>
                         </div>

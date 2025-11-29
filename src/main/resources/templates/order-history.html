@@ -62,12 +62,12 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline-primary btn-sm">
+                            <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-eye me-1"></i>Chi tiết
                             </a>
                         </td>
                     </tr>
-                    <tr th:if="${orders == null || #lists.isEmpty(orders)}">
+                    <tr th:if="${orders == null || orders.empty}">
                         <td colspan="6" class="text-center py-5">
                             <div class="empty-state">
                                 <i class="bi bi-bag-x text-muted"></i>
@@ -102,16 +102,19 @@
             <div class="row g-3">
                 <div class="col-md-4" th:each="product : ${recommendedProducts}">
                     <div class="card shadow-sm border-0 h-100">
-                        <img th:src="${product.thumbnail}" class="card-img-top" alt="Sản phẩm">
+                        <img th:src="${product.imageUrl != null ? product.imageUrl : '/images/no-image.svg'}" 
+                             class="card-img-top" style="height: 200px; object-fit: cover;" 
+                             th:alt="${product.name}"
+                             onerror="this.src='/images/no-image.svg'">
                         <div class="card-body">
                             <h6 class="card-title" th:text="${product.name}">Tai nghe không dây</h6>
                             <p class="text-danger fw-semibold mb-0" th:text="${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT') + ' ₫'}">850.000 ₫</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4" th:if="${recommendedProducts == null}">
+                <div class="col-md-4" th:if="${recommendedProducts == null || recommendedProducts.empty}">
                     <div class="card shadow-sm border-0 h-100">
-                        <img src="https://placehold.co/400x250" class="card-img-top" alt="Sản phẩm">
+                        <img src="/images/no-image.svg" class="card-img-top" style="height: 200px; object-fit: cover;" alt="Sản phẩm">
                         <div class="card-body">
                             <h6 class="card-title">Bộ sưu tập mới nhất</h6>
                             <p class="text-danger fw-semibold mb-0">Từ 499.000 ₫</p>

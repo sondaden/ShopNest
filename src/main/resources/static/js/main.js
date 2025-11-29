@@ -141,14 +141,23 @@
                 body: `productId=${productId}&quantity=${quantity}`
             });
 
-            if (response.ok) {
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
                 showToast('Đã thêm vào giỏ hàng!', 'success');
-                updateCartBadge();
+                updateCartBadge(data.cartCount);
+            } else if (response.status === 401) {
+                // Chưa đăng nhập
+                showToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'error');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
             } else {
-                throw new Error('Không thể thêm vào giỏ hàng');
+                throw new Error(data.error || 'Không thể thêm vào giỏ hàng');
             }
         } catch (error) {
-            showToast(error.message, 'error');
+            console.error('Add to cart error:', error);
+            showToast(error.message || 'Có lỗi xảy ra', 'error');
         } finally {
             hideLoading();
         }
@@ -211,12 +220,11 @@
     /**
      * Update cart badge count
      */
-    function updateCartBadge() {
-        // This would typically fetch the cart count from server
-        const badge = document.querySelector('.nav-link .badge');
-        if (badge) {
-            const currentCount = parseInt(badge.textContent) || 0;
-            badge.textContent = currentCount + 1;
+    function updateCartBadge(count) {
+        const badge = document.querySelector('.cart-badge');
+        if (badge && count !== undefined) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
         }
     }
 

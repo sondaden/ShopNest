@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - ShopNest Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" href="/css/admin.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('orders')}"></aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <a th:href="@{/admin/orders}" class="btn btn-link text-dark me-2">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h5 class="mb-0 fw-bold">Chi tiết đơn hàng #<span th:text="${order.code}">SN12345</span></h5>
+            <div class="ms-auto">
+                <span class="badge fs-6" 
+                      th:classappend="'status-' + ${order.status}" 
+                      th:text="${order.statusLabel}">Chờ xử lý</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <!-- Alert messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i><span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle me-2"></i><span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="row g-4">
+                <!-- Order Info -->
+                <div class="col-lg-8">
+                    <!-- Order Items -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="fw-bold mb-0">Sản phẩm trong đơn</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="item : ${order.items}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img th:src="${item.product.imageUrl}" 
+                                                 class="rounded me-3" width="50" height="50" 
+                                                 style="object-fit: cover;"
+                                                 onerror="this.src='https://placehold.co/50'" alt="">
+                                            <div>
+                                                <h6 class="mb-0" th:text="${item.product.name}">Sản phẩm ABC</h6>
+                                                <small class="text-muted" th:text="'SKU: ' + ${item.product.id}">SKU: 12345</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" th:text="${item.quantity}">2</td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT') + ' ₫'}">590.000 ₫</td>
+                                    <td class="text-end fw-semibold" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1.180.000 ₫</td>
+                                </tr>
+                                </tbody>
+                                <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Tổng cộng:</td>
+                                    <td class="text-end fw-bold text-danger fs-5" 
+                                        th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1.180.000 ₫</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="fw-bold mb-0">Lịch sử đơn hàng</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item" th:classappend="${order.status.name() == 'PENDING' ? 'active' : ''}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">Đơn hàng được tạo</h6>
+                                        <small class="text-muted" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">29/11/2025 10:30</small>
+                                    </div>
+                                </div>
+                                <div class="timeline-item" th:classappend="${order.status.name() == 'CONFIRMED' || order.status.name() == 'SHIPPED' || order.status.name() == 'DELIVERED' ? 'active' : ''}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">Đã xác nhận</h6>
+                                    </div>
+                                </div>
+                                <div class="timeline-item" th:classappend="${order.status.name() == 'SHIPPED' || order.status.name() == 'DELIVERED' ? 'active' : ''}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">Đang giao hàng</h6>
+                                    </div>
+                                </div>
+                                <div class="timeline-item" th:classappend="${order.status.name() == 'DELIVERED' ? 'active' : ''}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">Đã giao hàng</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Info & Actions -->
+                <div class="col-lg-4">
+                    <!-- Update Status -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="fw-bold mb-0">Cập nhật trạng thái</h6>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{'/admin/orders/' + ${order.id} + '/status'}" method="post">
+                                <div class="mb-3">
+                                    <select name="status" class="form-select">
+                                        <option th:each="s : ${statuses}" 
+                                                th:value="${s}" 
+                                                th:text="${s == T(com.sonnhuynhh.shopnest.model.OrderStatus).PENDING ? 'Chờ xử lý' : 
+                                                           s == T(com.sonnhuynhh.shopnest.model.OrderStatus).CONFIRMED ? 'Đã xác nhận' :
+                                                           s == T(com.sonnhuynhh.shopnest.model.OrderStatus).SHIPPED ? 'Đang giao' :
+                                                           s == T(com.sonnhuynhh.shopnest.model.OrderStatus).DELIVERED ? 'Hoàn thành' : 'Đã hủy'}"
+                                                th:selected="${s == order.status}">Status</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check-lg me-2"></i>Cập nhật
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Customer Info -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="fw-bold mb-0">Thông tin khách hàng</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Họ tên</small>
+                                <span th:text="${order.customerName}">Nguyễn Văn A</span>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Số điện thoại</small>
+                                <span th:text="${order.phone}">0901234567</span>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Email</small>
+                                <span th:text="${order.user.email}">user@example.com</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Địa chỉ giao hàng</small>
+                                <span th:text="${order.shippingAddress}">123 Đường ABC, Quận 1, TP.HCM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Info -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="fw-bold mb-0">Thanh toán</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Phương thức</small>
+                                <span th:text="${order.paymentMethodLabel}">COD</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Trạng thái</small>
+                                <span class="badge" 
+                                      th:classappend="${order.paymentStatus.name() == 'PAID' ? 'bg-success' : order.paymentStatus.name() == 'REFUNDED' ? 'bg-warning' : 'bg-secondary'}" 
+                                      th:text="${order.paymentStatusLabel}">Chưa thanh toán</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Note -->
+                    <div class="card border-0 shadow-sm" th:if="${order.note != null and order.note != ''}">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="fw-bold mb-0">Ghi chú</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0" th:text="${order.note}">Ghi chú của khách...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarClose = document.getElementById('sidebarClose');
+    sidebarToggle?.addEventListener('click', () => sidebar.classList.add('show'));
+    sidebarClose?.addEventListener('click', () => sidebar.classList.remove('show'));
+});
+</script>
+
+<style>
+.timeline { position: relative; padding-left: 30px; }
+.timeline-item { position: relative; padding-bottom: 20px; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item::before { content: ''; position: absolute; left: -24px; top: 8px; width: 2px; height: 100%; background: #dee2e6; }
+.timeline-item:last-child::before { display: none; }
+.timeline-marker { position: absolute; left: -30px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #dee2e6; border: 2px solid #fff; }
+.timeline-item.active .timeline-marker { background: #0d6efd; }
+.timeline-item.active::before { background: #0d6efd; }
+</style>
+
+</body>
+</html>

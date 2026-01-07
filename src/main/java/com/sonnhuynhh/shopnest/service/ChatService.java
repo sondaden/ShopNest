@@ -25,34 +25,34 @@ public class ChatService {
     private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
     private final RestTemplate restTemplate = new RestTemplate();
-    
+
     @Autowired
     private ProductRepository productRepository;
 
     // System prompt for ShopNest assistant
     private static final String SYSTEM_PROMPT_TEMPLATE = """
-        Bạn là trợ lý ảo của ShopNest - một cửa hàng thương mại điện tử.
-        Nhiệm vụ của bạn là:
-        - Hỗ trợ khách hàng tìm kiếm sản phẩm
-        - Trả lời câu hỏi về đơn hàng, giao hàng, thanh toán
-        - Tư vấn sản phẩm phù hợp với nhu cầu khách hàng
-        - Giải đáp thắc mắc về chính sách đổi trả, bảo hành
-        
-        DANH SÁCH SẢN PHẨM HIỆN CÓ:
-        %s
-        
-        CHÍNH SÁCH CỬA HÀNG:
-        - Miễn phí vận chuyển đơn từ 500,000đ
-        - Đổi trả trong 7 ngày nếu lỗi từ nhà sản xuất
-        - Bảo hành 12 tháng cho sản phẩm điện tử
-        - Thanh toán: COD, chuyển khoản, Momo, VNPay
-        - Hotline: 1900 1234
-        - Email: support@shopnest.vn
-        
-        Hãy trả lời ngắn gọn, thân thiện và hữu ích bằng tiếng Việt.
-        Khi giới thiệu sản phẩm, hãy nêu rõ tên và giá chính xác từ danh sách trên.
-        Nếu khách hỏi về sản phẩm không có trong danh sách, hãy thông báo hiện chưa có và đề xuất sản phẩm tương tự nếu có.
-        """;
+            Bạn là trợ lý ảo của ShopNest - một cửa hàng thương mại điện tử.
+            Nhiệm vụ của bạn là:
+            - Hỗ trợ khách hàng tìm kiếm sản phẩm
+            - Trả lời câu hỏi về đơn hàng, giao hàng, thanh toán
+            - Tư vấn sản phẩm phù hợp với nhu cầu khách hàng
+            - Giải đáp thắc mắc về chính sách đổi trả, bảo hành
+
+            DANH SÁCH SẢN PHẨM HIỆN CÓ:
+            %s
+
+            CHÍNH SÁCH CỬA HÀNG:
+            - Miễn phí vận chuyển đơn từ 500,000đ
+            - Đổi trả trong 7 ngày nếu lỗi từ nhà sản xuất
+            - Bảo hành 12 tháng cho sản phẩm điện tử
+            - Thanh toán: COD, chuyển khoản, Momo
+            - Hotline: 1900 1234
+            - Email: support@shopnest.vn
+
+            Hãy trả lời ngắn gọn, thân thiện và hữu ích bằng tiếng Việt.
+            Khi giới thiệu sản phẩm, hãy nêu rõ tên và giá chính xác từ danh sách trên.
+            Nếu khách hỏi về sản phẩm không có trong danh sách, hãy thông báo hiện chưa có và đề xuất sản phẩm tương tự nếu có.
+            """;
 
     public String chat(String userMessage) {
         try {
@@ -61,7 +61,7 @@ public class ChatService {
                 logger.error("Gemini API key is not configured");
                 return "Chatbot chưa được cấu hình. Vui lòng liên hệ admin.";
             }
-            
+
             String url = GEMINI_API_URL + "?key=" + apiKey;
 
             HttpHeaders headers = new HttpHeaders();
@@ -73,32 +73,32 @@ public class ChatService {
 
             // Build request body
             Map<String, Object> requestBody = new HashMap<>();
-            
+
             // System instruction
             Map<String, Object> systemInstruction = new HashMap<>();
             Map<String, String> systemPart = new HashMap<>();
             systemPart.put("text", systemPrompt);
             systemInstruction.put("parts", List.of(systemPart));
             requestBody.put("system_instruction", systemInstruction);
-            
+
             // User message
             List<Map<String, Object>> contents = new ArrayList<>();
             Map<String, Object> content = new HashMap<>();
             content.put("role", "user");
-            
+
             Map<String, String> part = new HashMap<>();
             part.put("text", userMessage);
             content.put("parts", List.of(part));
             contents.add(content);
-            
+
             requestBody.put("contents", contents);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             logger.info("Sending request to Gemini API...");
             @SuppressWarnings("unchecked")
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity, 
-                    (Class<Map<String, Object>>)(Class<?>)Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+                    (Class<Map<String, Object>>) (Class<?>) Map.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return extractTextFromResponse(response.getBody());
@@ -119,24 +119,25 @@ public class ChatService {
             return "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại sau.";
         }
     }
-    
+
     private String getProductListForContext() {
         try {
             List<Product> products = productRepository.findAll();
             if (products.isEmpty()) {
                 return "Hiện chưa có sản phẩm nào.";
             }
-            
+
             NumberFormat formatter = NumberFormat.getInstance(Locale.forLanguageTag("vi-VN"));
-            
+
             StringBuilder sb = new StringBuilder();
             int count = 0;
             for (Product p : products) {
-                if (count >= 50) break; // Limit to avoid too long context
-                sb.append(String.format("- %s: %s đ (Còn %d sản phẩm)\n", 
-                    p.getName(), 
-                    formatter.format(p.getPrice()),
-                    p.getStock()));
+                if (count >= 50)
+                    break; // Limit to avoid too long context
+                sb.append(String.format("- %s: %s đ (Còn %d sản phẩm)\n",
+                        p.getName(),
+                        formatter.format(p.getPrice()),
+                        p.getStock()));
                 count++;
             }
             return sb.toString();

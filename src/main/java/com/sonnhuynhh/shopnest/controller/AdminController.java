@@ -29,73 +29,90 @@ public class AdminController {
 
     @Autowired
     private ProductRepository productRepository;
-    
+
     @Autowired
     private ProductService productService;
-    
+
     @Autowired
     private CategoryRepository categoryRepository;
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     // ==================== DASHBOARD ====================
-    @GetMapping({"", "/"})
+    @GetMapping({ "", "/" })
     public String dashboard(Model model) {
-        // Stats
-        long totalProducts = productRepository.count();
-        long totalCustomers = userRepository.countByRole(Role.USER);
-        long totalOrders = orderRepository.count();
-        long pendingOrders = orderRepository.countByStatus(OrderStatus.PENDING);
-        
-        // Today's revenue (paid orders today)
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        BigDecimal todayRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtAfter(
-            PaymentStatus.PAID, startOfDay);
-        if (todayRevenue == null) {
-            todayRevenue = BigDecimal.ZERO;
+        try {
+            // Stats
+            long totalProducts = productRepository.count();
+            long totalCustomers = userRepository.countByRole(Role.USER);
+            long totalOrders = orderRepository.count();
+            long pendingOrders = orderRepository.countByStatus(OrderStatus.PENDING);
+
+            // Today's revenue (paid orders today)
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            BigDecimal todayRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtAfter(
+                    PaymentStatus.PAID, startOfDay);
+            if (todayRevenue == null) {
+                todayRevenue = BigDecimal.ZERO;
+            }
+
+            // Monthly revenue
+            LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime endOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth())
+                    .atTime(LocalTime.MAX);
+            BigDecimal monthlyRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtBetween(
+                    PaymentStatus.PAID, startOfMonth, endOfMonth);
+            if (monthlyRevenue == null) {
+                monthlyRevenue = BigDecimal.ZERO;
+            }
+
+            // Today's orders count
+            long todayOrdersCount = orderRepository.countByCreatedAtAfter(startOfDay);
+
+            // Recent orders
+            List<Order> recentOrders = orderRepository.findTop10ByOrderByCreatedAtDesc();
+
+            // Top products (most recent products as placeholder)
+            List<Product> topProducts = productRepository.findAllByOrderByIdDesc(PageRequest.of(0, 5));
+
+            // Low stock products
+            List<Product> lowStockProducts = productRepository.findByStockLessThanOrderByStockAsc(10);
+
+            model.addAttribute("totalProducts", totalProducts);
+            model.addAttribute("totalCustomers", totalCustomers);
+            model.addAttribute("totalOrders", totalOrders);
+            model.addAttribute("pendingOrders", pendingOrders);
+            model.addAttribute("newOrders", pendingOrders);
+            model.addAttribute("recentOrders", recentOrders);
+            model.addAttribute("todayRevenue", todayRevenue);
+            model.addAttribute("monthlyRevenue", monthlyRevenue);
+            model.addAttribute("todayOrdersCount", todayOrdersCount);
+            model.addAttribute("topProducts", topProducts);
+            model.addAttribute("lowStockProducts", lowStockProducts);
+        } catch (Exception e) {
+            // Fallback data if there's an error
+            model.addAttribute("totalProducts", 0L);
+            model.addAttribute("totalCustomers", 0L);
+            model.addAttribute("totalOrders", 0L);
+            model.addAttribute("pendingOrders", 0L);
+            model.addAttribute("newOrders", 0L);
+            model.addAttribute("recentOrders", java.util.Collections.emptyList());
+            model.addAttribute("todayRevenue", BigDecimal.ZERO);
+            model.addAttribute("monthlyRevenue", BigDecimal.ZERO);
+            model.addAttribute("todayOrdersCount", 0L);
+            model.addAttribute("topProducts", java.util.Collections.emptyList());
+            model.addAttribute("lowStockProducts", java.util.Collections.emptyList());
+            model.addAttribute("error", "Lỗi tải dữ liệu: " + e.getMessage());
         }
-        
-        // Monthly revenue
-        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(LocalTime.MAX);
-        BigDecimal monthlyRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtBetween(
-            PaymentStatus.PAID, startOfMonth, endOfMonth);
-        if (monthlyRevenue == null) {
-            monthlyRevenue = BigDecimal.ZERO;
-        }
-        
-        // Today's orders count
-        long todayOrdersCount = orderRepository.countByCreatedAtAfter(startOfDay);
-        
-        // Recent orders
-        List<Order> recentOrders = orderRepository.findTop10ByOrderByCreatedAtDesc();
-        
-        // Top products (most recent products as placeholder)
-        List<Product> topProducts = productRepository.findAllByOrderByIdDesc(PageRequest.of(0, 5));
-        
-        // Low stock products
-        List<Product> lowStockProducts = productRepository.findByStockLessThanOrderByStockAsc(10);
-        
-        model.addAttribute("totalProducts", totalProducts);
-        model.addAttribute("totalCustomers", totalCustomers);
-        model.addAttribute("totalOrders", totalOrders);
-        model.addAttribute("pendingOrders", pendingOrders);
-        model.addAttribute("newOrders", pendingOrders);
-        model.addAttribute("recentOrders", recentOrders);
-        model.addAttribute("todayRevenue", todayRevenue);
-        model.addAttribute("monthlyRevenue", monthlyRevenue);
-        model.addAttribute("todayOrdersCount", todayOrdersCount);
-        model.addAttribute("topProducts", topProducts);
-        model.addAttribute("lowStockProducts", lowStockProducts);
         model.addAttribute("activePage", "dashboard");
-        
+
         return "admin/dashboard";
     }
 
@@ -107,10 +124,10 @@ public class AdminController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
             Model model) {
-        
+
         Page<Product> productPage;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        
+
         if (search != null && !search.isEmpty()) {
             productPage = productRepository.findByNameContainingIgnoreCase(search, pageRequest);
         } else if (categoryId != null) {
@@ -118,9 +135,9 @@ public class AdminController {
         } else {
             productPage = productRepository.findAll(pageRequest);
         }
-        
+
         List<Category> categories = categoryRepository.findAll();
-        
+
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
@@ -129,7 +146,7 @@ public class AdminController {
         model.addAttribute("search", search);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("activePage", "products");
-        
+
         return "admin/products";
     }
 
@@ -145,11 +162,11 @@ public class AdminController {
     @GetMapping("/products/edit/{id}")
     public String editProductForm(@PathVariable Long id, Model model) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
         // Lấy danh sách ảnh của sản phẩm
         var productImages = productService.getProductImages(id);
-        
+
         model.addAttribute("product", product);
         model.addAttribute("productImages", productImages);
         model.addAttribute("categories", categoryRepository.findAll());
@@ -160,16 +177,16 @@ public class AdminController {
 
     @PostMapping("/products/save")
     public String saveProduct(@RequestParam String name,
-                              @RequestParam java.math.BigDecimal price,
-                              @RequestParam Integer stock,
-                              @RequestParam(required = false) String description,
-                              @RequestParam(required = false) String imageUrl,
-                              @RequestParam(required = false) List<String> imageUrls,
-                              @RequestParam Long categoryId,
-                              @RequestParam(required = false) Long brandId,
-                              @RequestParam(required = false) Double rating,
-                              @RequestParam(required = false) Long productId,
-                              RedirectAttributes redirectAttributes) {
+            @RequestParam java.math.BigDecimal price,
+            @RequestParam Integer stock,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String imageUrl,
+            @RequestParam(required = false) List<String> imageUrls,
+            @RequestParam Long categoryId,
+            @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) Double rating,
+            @RequestParam(required = false) Long productId,
+            RedirectAttributes redirectAttributes) {
         try {
             // Lọc các URL rỗng
             List<String> validImageUrls = null;
@@ -178,16 +195,16 @@ public class AdminController {
                         .filter(url -> url != null && !url.trim().isEmpty())
                         .toList();
             }
-            
+
             // Nếu không có danh sách ảnh nhưng có imageUrl đơn lẻ
-            if ((validImageUrls == null || validImageUrls.isEmpty()) && imageUrl != null && !imageUrl.trim().isEmpty()) {
+            if ((validImageUrls == null || validImageUrls.isEmpty()) && imageUrl != null
+                    && !imageUrl.trim().isEmpty()) {
                 validImageUrls = List.of(imageUrl.trim());
             }
-            
+
             ProductRequest productRequest = new ProductRequest(
-                    name, price, stock, description, imageUrl, validImageUrls, categoryId, brandId, rating
-            );
-            
+                    name, price, stock, description, imageUrl, validImageUrls, categoryId, brandId, rating);
+
             if (productId != null) {
                 productService.updateProduct(productId, productRequest);
                 redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công!");
@@ -223,14 +240,14 @@ public class AdminController {
 
     @PostMapping("/categories/save")
     public String saveCategory(@RequestParam String name,
-                               @RequestParam(required = false) String description,
-                               @RequestParam(required = false) Long categoryId,
-                               RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Long categoryId,
+            RedirectAttributes redirectAttributes) {
         try {
             Category category;
             if (categoryId != null) {
                 category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                        .orElseThrow(() -> new RuntimeException("Category not found"));
             } else {
                 category = new Category();
             }
@@ -238,16 +255,16 @@ public class AdminController {
             category.setDescription(description);
             // Auto generate slug from name
             String slug = name.toLowerCase()
-                .replaceAll("[đĐ]", "d")
-                .replaceAll("[àáạảãâầấậẩẫăằắặẳẵ]", "a")
-                .replaceAll("[èéẹẻẽêềếệểễ]", "e")
-                .replaceAll("[ìíịỉĩ]", "i")
-                .replaceAll("[òóọỏõôồốộổỗơờớợởỡ]", "o")
-                .replaceAll("[ùúụủũưừứựửữ]", "u")
-                .replaceAll("[ỳýỵỷỹ]", "y")
-                .replaceAll("[^a-z0-9\\s]", "")
-                .replaceAll("\\s+", "-")
-                .replaceAll("^-|-$", "");
+                    .replaceAll("[đĐ]", "d")
+                    .replaceAll("[àáạảãâầấậẩẫăằắặẳẵ]", "a")
+                    .replaceAll("[èéẹẻẽêềếệểễ]", "e")
+                    .replaceAll("[ìíịỉĩ]", "i")
+                    .replaceAll("[òóọỏõôồốộổỗơờớợởỡ]", "o")
+                    .replaceAll("[ùúụủũưừứựửữ]", "u")
+                    .replaceAll("[ỳýỵỷỹ]", "y")
+                    .replaceAll("[^a-z0-9\\s]", "")
+                    .replaceAll("\\s+", "-")
+                    .replaceAll("^-|-$", "");
             category.setSlug(slug);
             categoryRepository.save(category);
             redirectAttributes.addFlashAttribute("success", "Lưu danh mục thành công!");
@@ -275,23 +292,23 @@ public class AdminController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             Model model) {
-        
+
         Page<Order> orderPage;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        
+
         if (status != null && !status.isEmpty()) {
             orderPage = orderRepository.findByStatus(OrderStatus.valueOf(status), pageRequest);
         } else {
             orderPage = orderRepository.findAll(pageRequest);
         }
-        
+
         // Order status counts
         long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
         long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
         long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
         long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
         long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
-        
+
         model.addAttribute("orders", orderPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", orderPage.getTotalPages());
@@ -304,15 +321,15 @@ public class AdminController {
         model.addAttribute("deliveredCount", deliveredCount);
         model.addAttribute("cancelledCount", cancelledCount);
         model.addAttribute("activePage", "orders");
-        
+
         return "admin/orders";
     }
 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Long id, Model model) {
         Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
         model.addAttribute("order", order);
         model.addAttribute("statuses", OrderStatus.values());
         model.addAttribute("activePage", "orders");
@@ -321,11 +338,11 @@ public class AdminController {
 
     @PostMapping("/orders/{id}/status")
     public String updateOrderStatus(@PathVariable Long id,
-                                    @RequestParam String status,
-                                    RedirectAttributes redirectAttributes) {
+            @RequestParam String status,
+            RedirectAttributes redirectAttributes) {
         try {
             Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
             order.setStatus(OrderStatus.valueOf(status));
             orderRepository.save(order);
             redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái thành công!");
@@ -342,23 +359,23 @@ public class AdminController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
             Model model) {
-        
+
         Page<User> userPage;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        
+
         if (search != null && !search.isEmpty()) {
             userPage = userRepository.findByEmailContainingIgnoreCase(search, pageRequest);
         } else {
             userPage = userRepository.findAll(pageRequest);
         }
-        
+
         // User stats
         long totalUsers = userRepository.count();
         long activeUsers = userRepository.countByActiveTrue();
         long inactiveUsers = userRepository.countByActiveFalse();
         long adminCount = userRepository.countByRole(Role.ADMIN);
         long customerCount = userRepository.countByRole(Role.USER);
-        
+
         model.addAttribute("users", userPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", userPage.getTotalPages());
@@ -370,8 +387,45 @@ public class AdminController {
         model.addAttribute("adminCount", adminCount);
         model.addAttribute("customerCount", customerCount);
         model.addAttribute("activePage", "users");
-        
+
         return "admin/users";
+    }
+
+    @PostMapping("/users/delete/{id}")
+    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+            // Không cho xóa Admin
+            if (user.getRole() == Role.ADMIN) {
+                redirectAttributes.addFlashAttribute("error", "Không thể xóa tài khoản Admin!");
+                return "redirect:/admin/users";
+            }
+
+            userRepository.delete(user);
+            redirectAttributes.addFlashAttribute("success", "Xóa người dùng thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/users/toggle-status/{id}")
+    public String toggleUserStatus(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+            user.setActive(!user.isActive());
+            userRepository.save(user);
+
+            String status = user.isActive() ? "kích hoạt" : "khóa";
+            redirectAttributes.addFlashAttribute("success", "Đã " + status + " tài khoản " + user.getUsername());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/users";
     }
 
     // ==================== REPORTS ====================
@@ -379,44 +433,44 @@ public class AdminController {
     public String reports(Model model) {
         // Total revenue (all paid orders)
         BigDecimal totalRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtBetween(
-            PaymentStatus.PAID, 
-            LocalDateTime.of(2000, 1, 1, 0, 0), 
-            LocalDateTime.now());
+                PaymentStatus.PAID,
+                LocalDateTime.of(2000, 1, 1, 0, 0),
+                LocalDateTime.now());
         if (totalRevenue == null) {
             totalRevenue = BigDecimal.ZERO;
         }
-        
+
         // Total orders
         long totalOrders = orderRepository.count();
-        
+
         // Average order value
         BigDecimal avgOrderValue = BigDecimal.ZERO;
         if (totalOrders > 0 && totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
             avgOrderValue = totalRevenue.divide(BigDecimal.valueOf(totalOrders), 0, java.math.RoundingMode.HALF_UP);
         }
-        
+
         // Order status counts
         long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
         long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
         long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
         long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
         long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
-        
+
         // Calculate percentages
         int pendingPercent = totalOrders > 0 ? (int) (pendingCount * 100 / totalOrders) : 0;
         int shippingPercent = totalOrders > 0 ? (int) (shippingCount * 100 / totalOrders) : 0;
         int deliveredPercent = totalOrders > 0 ? (int) (deliveredCount * 100 / totalOrders) : 0;
         int cancelledPercent = totalOrders > 0 ? (int) (cancelledCount * 100 / totalOrders) : 0;
-        
+
         // Top products (recent products)
         List<Product> topProducts = productRepository.findAllByOrderByIdDesc(PageRequest.of(0, 5));
-        
+
         // Recent orders
         List<Order> recentOrders = orderRepository.findTop10ByOrderByCreatedAtDesc();
-        
+
         // Low stock products
         List<Product> lowStockProducts = productRepository.findByStockLessThanOrderByStockAsc(10);
-        
+
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("avgOrderValue", avgOrderValue);
@@ -436,20 +490,27 @@ public class AdminController {
         return "admin/reports";
     }
 
+    // ==================== COUPONS ====================
+    @GetMapping("/coupons")
+    public String coupons(Model model) {
+        model.addAttribute("activePage", "coupons");
+        return "admin/coupons";
+    }
+
     // ==================== SETTINGS ====================
     @GetMapping("/settings")
     public String settings(Model model) {
         model.addAttribute("activePage", "settings");
         return "admin/settings";
     }
-    
+
     // ==================== PROFILE ====================
     @GetMapping("/profile")
     public String profile(Model model, Authentication authentication) {
         if (authentication == null) {
             return "redirect:/login";
         }
-        
+
         String identifier = authentication.getName();
         User admin = userRepository.findByUsername(identifier)
                 .or(() -> userRepository.findByEmail(identifier))
@@ -458,63 +519,63 @@ public class AdminController {
         model.addAttribute("activePage", "profile");
         return "admin/profile";
     }
-    
+
     @PostMapping("/profile/update")
     public String updateProfile(@RequestParam String fullName,
-                                @RequestParam(required = false) String phone,
-                                @RequestParam(required = false) String avatarUrl,
-                                Authentication authentication,
-                                RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String avatarUrl,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
             String identifier = authentication.getName();
             User admin = userRepository.findByUsername(identifier)
                     .or(() -> userRepository.findByEmail(identifier))
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            
+
             admin.setFullName(fullName);
             admin.setPhone(phone);
             if (avatarUrl != null && !avatarUrl.isEmpty()) {
                 admin.setAvatarUrl(avatarUrl);
             }
             userRepository.save(admin);
-            
+
             redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
         return "redirect:/admin/profile";
     }
-    
+
     @PostMapping("/profile/change-password")
     public String changePassword(@RequestParam String currentPassword,
-                                 @RequestParam String newPassword,
-                                 @RequestParam String confirmPassword,
-                                 Authentication authentication,
-                                 RedirectAttributes redirectAttributes) {
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
             String identifier = authentication.getName();
             User admin = userRepository.findByUsername(identifier)
                     .or(() -> userRepository.findByEmail(identifier))
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            
+
             if (!passwordEncoder.matches(currentPassword, admin.getPassword())) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng!");
                 return "redirect:/admin/profile";
             }
-            
+
             if (!newPassword.equals(confirmPassword)) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu mới không khớp!");
                 return "redirect:/admin/profile";
             }
-            
+
             if (newPassword.length() < 6) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự!");
                 return "redirect:/admin/profile";
             }
-            
+
             admin.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(admin);
-            
+
             redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());

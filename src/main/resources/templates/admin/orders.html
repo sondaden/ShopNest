@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,309 +15,383 @@
             font-weight: 500;
             font-size: 0.8rem;
         }
-        .status-PENDING { background: #fff3cd; color: #856404; }
-        .status-CONFIRMED { background: #cce5ff; color: #004085; }
-        .status-SHIPPING { background: #d1ecf1; color: #0c5460; }
-        .status-COMPLETED { background: #d4edda; color: #155724; }
-        .status-CANCELLED { background: #f8d7da; color: #721c24; }
-        
+
+        .status-PENDING {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-CONFIRMED {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-SHIPPING {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-COMPLETED {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-CANCELLED {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .order-code {
             font-family: monospace;
             font-weight: 600;
             color: #667eea;
         }
+
         .stats-card {
             border-radius: 16px;
             transition: transform 0.3s ease;
         }
+
         .stats-card:hover {
             transform: translateY(-5px);
         }
+
         .customer-info {
             line-height: 1.4;
         }
+
         @media print {
-            .no-print { display: none !important; }
-            .modal-backdrop { display: none !important; }
+
+            /* Ẩn tất cả khi in */
+            body * {
+                visibility: hidden;
+            }
+
+            /* Chỉ hiển thị modal invoice */
+            #printableInvoice,
+            #printableInvoice * {
+                visibility: visible !important;
+            }
+
+            #printableInvoice {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white;
+            }
+
+            /* Ẩn các phần tử không cần in */
+            .no-print,
+            .modal-footer,
+            .btn,
+            header,
+            aside,
+            .admin-sidebar,
+            .admin-header,
+            .toast-container {
+                display: none !important;
+            }
+
+            /* Style cho bảng in */
+            #printableInvoice table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            #printableInvoice th,
+            #printableInvoice td {
+                border: 1px solid #ddd;
+                padding: 8px;
+            }
+
+            #printableInvoice img {
+                max-width: 40px;
+                max-height: 40px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="admin-wrapper">
-    <!-- Sidebar -->
-    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('orders')}" class="no-print"></aside>
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <aside th:replace="~{admin/fragments/admin-layout :: sidebar('orders')}" class="no-print"></aside>
 
-    <!-- Main Content -->
-    <main class="admin-main">
-        <header class="admin-header no-print">
-            <button class="btn btn-link d-lg-none me-2" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Quản lý đơn hàng</h5>
-        </header>
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header no-print">
+                <button class="btn btn-link d-lg-none me-2" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Quản lý đơn hàng</h5>
+            </header>
 
-        <div class="admin-content">
-            <!-- Stats Cards -->
-            <div class="row g-3 mb-4 no-print">
-                <div class="col-6 col-lg-2">
-                    <div class="card stats-card border-0 shadow-sm text-center py-3">
-                        <div class="card-body">
-                            <i class="bi bi-box-seam fs-4 text-primary mb-2 d-block"></i>
-                            <h4 class="fw-bold mb-1" id="totalOrders">0</h4>
-                            <small class="text-muted">Tổng đơn</small>
+            <div class="admin-content">
+                <!-- Stats Cards -->
+                <div class="row g-3 mb-4 no-print">
+                    <div class="col-6 col-lg-2">
+                        <div class="card stats-card border-0 shadow-sm text-center py-3">
+                            <div class="card-body">
+                                <i class="bi bi-box-seam fs-4 text-primary mb-2 d-block"></i>
+                                <h4 class="fw-bold mb-1" id="totalOrders">0</h4>
+                                <small class="text-muted">Tổng đơn</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="card stats-card border-0 shadow-sm text-center py-3">
+                            <div class="card-body">
+                                <i class="bi bi-clock-history fs-4 text-warning mb-2 d-block"></i>
+                                <h4 class="fw-bold text-warning mb-1" id="pendingOrders">0</h4>
+                                <small class="text-muted">Chờ xử lý</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="card stats-card border-0 shadow-sm text-center py-3">
+                            <div class="card-body">
+                                <i class="bi bi-check2-circle fs-4 text-info mb-2 d-block"></i>
+                                <h4 class="fw-bold text-info mb-1" id="confirmedOrders">0</h4>
+                                <small class="text-muted">Đã xác nhận</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="card stats-card border-0 shadow-sm text-center py-3">
+                            <div class="card-body">
+                                <i class="bi bi-truck fs-4 text-primary mb-2 d-block"></i>
+                                <h4 class="fw-bold text-primary mb-1" id="shippingOrders">0</h4>
+                                <small class="text-muted">Đang giao</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="card stats-card border-0 shadow-sm text-center py-3">
+                            <div class="card-body">
+                                <i class="bi bi-check-circle-fill fs-4 text-success mb-2 d-block"></i>
+                                <h4 class="fw-bold text-success mb-1" id="completedOrders">0</h4>
+                                <small class="text-muted">Hoàn thành</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="card stats-card border-0 shadow-sm text-center py-3">
+                            <div class="card-body">
+                                <i class="bi bi-x-circle fs-4 text-danger mb-2 d-block"></i>
+                                <h4 class="fw-bold text-danger mb-1" id="cancelledOrders">0</h4>
+                                <small class="text-muted">Đã hủy</small>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-lg-2">
-                    <div class="card stats-card border-0 shadow-sm text-center py-3">
-                        <div class="card-body">
-                            <i class="bi bi-clock-history fs-4 text-warning mb-2 d-block"></i>
-                            <h4 class="fw-bold text-warning mb-1" id="pendingOrders">0</h4>
-                            <small class="text-muted">Chờ xử lý</small>
+
+                <!-- Filters -->
+                <div class="card border-0 shadow-sm mb-4 no-print">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-search me-1"></i>Tìm kiếm</label>
+                                <input type="text" id="searchInput" class="form-control"
+                                    placeholder="Mã đơn, tên KH, SĐT...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-funnel me-1"></i>Trạng thái</label>
+                                <select class="form-select" id="statusFilter">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="PENDING">🟡 Chờ xử lý</option>
+                                    <option value="CONFIRMED">🔵 Đã xác nhận</option>
+                                    <option value="SHIPPING">🚚 Đang giao</option>
+                                    <option value="COMPLETED">✅ Hoàn thành</option>
+                                    <option value="CANCELLED">❌ Đã hủy</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-credit-card me-1"></i>Thanh toán</label>
+                                <select class="form-select" id="paymentFilter">
+                                    <option value="">Tất cả</option>
+                                    <option value="PAID">Đã thanh toán</option>
+                                    <option value="UNPAID">Chưa thanh toán</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary me-2" onclick="loadOrders()">
+                                    <i class="bi bi-search me-1"></i>Lọc
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                    <i class="bi bi-x-lg me-1"></i>Xóa lọc
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-lg-2">
-                    <div class="card stats-card border-0 shadow-sm text-center py-3">
-                        <div class="card-body">
-                            <i class="bi bi-check2-circle fs-4 text-info mb-2 d-block"></i>
-                            <h4 class="fw-bold text-info mb-1" id="confirmedOrders">0</h4>
-                            <small class="text-muted">Đã xác nhận</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-2">
-                    <div class="card stats-card border-0 shadow-sm text-center py-3">
-                        <div class="card-body">
-                            <i class="bi bi-truck fs-4 text-primary mb-2 d-block"></i>
-                            <h4 class="fw-bold text-primary mb-1" id="shippingOrders">0</h4>
-                            <small class="text-muted">Đang giao</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-2">
-                    <div class="card stats-card border-0 shadow-sm text-center py-3">
-                        <div class="card-body">
-                            <i class="bi bi-check-circle-fill fs-4 text-success mb-2 d-block"></i>
-                            <h4 class="fw-bold text-success mb-1" id="completedOrders">0</h4>
-                            <small class="text-muted">Hoàn thành</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-2">
-                    <div class="card stats-card border-0 shadow-sm text-center py-3">
-                        <div class="card-body">
-                            <i class="bi bi-x-circle fs-4 text-danger mb-2 d-block"></i>
-                            <h4 class="fw-bold text-danger mb-1" id="cancelledOrders">0</h4>
-                            <small class="text-muted">Đã hủy</small>
-                        </div>
+
+                <!-- Orders Table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="bi bi-hash me-1"></i>Mã đơn</th>
+                                    <th><i class="bi bi-person me-1"></i>Khách hàng</th>
+                                    <th><i class="bi bi-box me-1"></i>Sản phẩm</th>
+                                    <th><i class="bi bi-cash me-1"></i>Tổng tiền</th>
+                                    <th><i class="bi bi-credit-card me-1"></i>Thanh toán</th>
+                                    <th><i class="bi bi-flag me-1"></i>Trạng thái</th>
+                                    <th><i class="bi bi-calendar me-1"></i>Ngày đặt</th>
+                                    <th width="150" class="no-print">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 mb-0 text-muted">Đang tải dữ liệu...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <!-- Filters -->
-            <div class="card border-0 shadow-sm mb-4 no-print">
-                <div class="card-body">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-search me-1"></i>Tìm kiếm</label>
-                            <input type="text" id="searchInput" class="form-control" placeholder="Mã đơn, tên KH, SĐT...">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-funnel me-1"></i>Trạng thái</label>
-                            <select class="form-select" id="statusFilter">
-                                <option value="">Tất cả trạng thái</option>
-                                <option value="PENDING">🟡 Chờ xử lý</option>
-                                <option value="CONFIRMED">🔵 Đã xác nhận</option>
-                                <option value="SHIPPING">🚚 Đang giao</option>
-                                <option value="COMPLETED">✅ Hoàn thành</option>
-                                <option value="CANCELLED">❌ Đã hủy</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-credit-card me-1"></i>Thanh toán</label>
-                            <select class="form-select" id="paymentFilter">
-                                <option value="">Tất cả</option>
-                                <option value="PAID">Đã thanh toán</option>
-                                <option value="UNPAID">Chưa thanh toán</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-primary me-2" onclick="loadOrders()">
-                                <i class="bi bi-search me-1"></i>Lọc
-                            </button>
-                            <button class="btn btn-outline-secondary" onclick="clearFilters()">
-                                <i class="bi bi-x-lg me-1"></i>Xóa lọc
-                            </button>
-                        </div>
-                    </div>
+    <!-- Order Detail Modal -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>Chi tiết đơn hàng <span
+                            id="modalOrderCode" class="order-code"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-            </div>
-
-            <!-- Orders Table -->
-            <div class="card border-0 shadow-sm">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light">
-                        <tr>
-                            <th><i class="bi bi-hash me-1"></i>Mã đơn</th>
-                            <th><i class="bi bi-person me-1"></i>Khách hàng</th>
-                            <th><i class="bi bi-box me-1"></i>Sản phẩm</th>
-                            <th><i class="bi bi-cash me-1"></i>Tổng tiền</th>
-                            <th><i class="bi bi-credit-card me-1"></i>Thanh toán</th>
-                            <th><i class="bi bi-flag me-1"></i>Trạng thái</th>
-                            <th><i class="bi bi-calendar me-1"></i>Ngày đặt</th>
-                            <th width="150" class="no-print">Thao tác</th>
-                        </tr>
-                        </thead>
-                        <tbody id="ordersTableBody">
-                            <tr>
-                                <td colspan="8" class="text-center py-5">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="mt-2 mb-0 text-muted">Đang tải dữ liệu...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="modal-body" id="orderDetailContent">
+                    <!-- Content loaded via JS -->
                 </div>
-            </div>
-        </div>
-    </main>
-</div>
-
-<!-- Order Detail Modal -->
-<div class="modal fade" id="orderDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>Chi tiết đơn hàng <span id="modalOrderCode" class="order-code"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="orderDetailContent">
-                <!-- Content loaded via JS -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" onclick="printCurrentOrder()">
-                    <i class="bi bi-printer me-1"></i>In hóa đơn
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="printCurrentOrder()">
+                        <i class="bi bi-printer me-1"></i>In hóa đơn
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Update Status Modal -->
-<div class="modal fade" id="updateStatusModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2"></i>Cập nhật trạng thái</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="updateOrderId">
-                <div class="mb-3">
-                    <label class="form-label">Trạng thái mới</label>
-                    <select class="form-select" id="newStatus">
-                        <option value="PENDING">🟡 Chờ xử lý</option>
-                        <option value="CONFIRMED">🔵 Đã xác nhận</option>
-                        <option value="SHIPPING">🚚 Đang giao hàng</option>
-                        <option value="COMPLETED">✅ Hoàn thành</option>
-                        <option value="CANCELLED">❌ Đã hủy</option>
-                    </select>
+    <!-- Update Status Modal -->
+    <div class="modal fade" id="updateStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2"></i>Cập nhật trạng thái</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="saveStatus()">
-                    <i class="bi bi-check me-1"></i>Cập nhật
-                </button>
+                <div class="modal-body">
+                    <input type="hidden" id="updateOrderId">
+                    <div class="mb-3">
+                        <label class="form-label">Trạng thái mới</label>
+                        <select class="form-select" id="newStatus">
+                            <option value="PENDING">🟡 Chờ xử lý</option>
+                            <option value="CONFIRMED">🔵 Đã xác nhận</option>
+                            <option value="SHIPPING">🚚 Đang giao hàng</option>
+                            <option value="COMPLETED">✅ Hoàn thành</option>
+                            <option value="CANCELLED">❌ Đã hủy</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="saveStatus()">
+                        <i class="bi bi-check me-1"></i>Cập nhật
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-let allOrders = [];
-let currentOrderId = null;
-const orderDetailModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
-const updateStatusModal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allOrders = [];
+        let currentOrderId = null;
+        const orderDetailModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        const updateStatusModal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
 
-// Toast function
-function showToast(message, type = 'info') {
-    let container = document.querySelector('.toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.className = 'toast-container';
-        container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;';
-        document.body.appendChild(container);
-    }
-    
-    const colors = { success: '#28a745', error: '#dc3545', info: '#17a2b8', warning: '#ffc107' };
-    const toast = document.createElement('div');
-    toast.style.cssText = `background:${colors[type] || colors.info};color:white;padding:1rem 1.5rem;border-radius:8px;margin-bottom:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);`;
-    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle'} me-2"></i>${message}`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
+        // Toast function
+        function showToast(message, type = 'info') {
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container';
+                container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;';
+                document.body.appendChild(container);
+            }
 
-// Load orders
-async function loadOrders() {
-    try {
-        const response = await fetch('/api/admin/orders');
-        if (!response.ok) throw new Error('Failed to load');
-        allOrders = await response.json();
-        renderOrders();
-        loadStatistics();
-    } catch (error) {
-        console.error('Error loading orders:', error);
-        document.getElementById('ordersTableBody').innerHTML = `
+            const colors = { success: '#28a745', error: '#dc3545', info: '#17a2b8', warning: '#ffc107' };
+            const toast = document.createElement('div');
+            toast.style.cssText = `background:${colors[type] || colors.info};color:white;padding:1rem 1.5rem;border-radius:8px;margin-bottom:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);`;
+            toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle'} me-2"></i>${message}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Load orders
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/admin/orders');
+                if (!response.ok) throw new Error('Failed to load');
+                allOrders = await response.json();
+                renderOrders();
+                loadStatistics();
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('ordersTableBody').innerHTML = `
             <tr><td colspan="8" class="text-center py-5 text-danger">
                 <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
                 Không thể tải danh sách đơn hàng
             </td></tr>`;
-    }
-}
-
-// Load statistics
-async function loadStatistics() {
-    try {
-        const response = await fetch('/api/admin/orders/statistics');
-        const stats = await response.json();
-        
-        document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
-        document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
-        document.getElementById('confirmedOrders').textContent = stats.confirmedOrders || 0;
-        document.getElementById('shippingOrders').textContent = stats.shippingOrders || 0;
-        document.getElementById('completedOrders').textContent = stats.completedOrders || 0;
-        document.getElementById('cancelledOrders').textContent = stats.cancelledOrders || 0;
-    } catch (error) {
-        console.error('Error loading statistics:', error);
-    }
-}
-
-// Render orders table
-function renderOrders() {
-    const tbody = document.getElementById('ordersTableBody');
-    const statusFilter = document.getElementById('statusFilter').value;
-    const paymentFilter = document.getElementById('paymentFilter').value;
-    const searchText = document.getElementById('searchInput').value.toLowerCase();
-    
-    let filteredOrders = allOrders.filter(order => {
-        if (statusFilter && order.status !== statusFilter) return false;
-        if (paymentFilter === 'PAID' && order.paymentStatus !== 'PAID') return false;
-        if (paymentFilter === 'UNPAID' && order.paymentStatus === 'PAID') return false;
-        if (searchText) {
-            const searchIn = `${order.orderCode || ''} ${order.customerName || ''} ${order.phone || ''}`.toLowerCase();
-            if (!searchIn.includes(searchText)) return false;
+            }
         }
-        return true;
-    });
-    
-    if (filteredOrders.length === 0) {
-        tbody.innerHTML = `
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/admin/orders/statistics');
+                const stats = await response.json();
+
+                document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+                document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
+                document.getElementById('confirmedOrders').textContent = stats.confirmedOrders || 0;
+                document.getElementById('shippingOrders').textContent = stats.shippingOrders || 0;
+                document.getElementById('completedOrders').textContent = stats.completedOrders || 0;
+                document.getElementById('cancelledOrders').textContent = stats.cancelledOrders || 0;
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Render orders table
+        function renderOrders() {
+            const tbody = document.getElementById('ordersTableBody');
+            const statusFilter = document.getElementById('statusFilter').value;
+            const paymentFilter = document.getElementById('paymentFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+            let filteredOrders = allOrders.filter(order => {
+                if (statusFilter && order.status !== statusFilter) return false;
+                if (paymentFilter === 'PAID' && order.paymentStatus !== 'PAID') return false;
+                if (paymentFilter === 'UNPAID' && order.paymentStatus === 'PAID') return false;
+                if (searchText) {
+                    const searchIn = `${order.orderCode || ''} ${order.customerName || ''} ${order.phone || ''}`.toLowerCase();
+                    if (!searchIn.includes(searchText)) return false;
+                }
+                return true;
+            });
+
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox display-4 d-block mb-3"></i>
@@ -324,10 +399,10 @@ function renderOrders() {
                 </td>
             </tr>
         `;
-        return;
-    }
-    
-    tbody.innerHTML = filteredOrders.map(order => `
+                return;
+            }
+
+            tbody.innerHTML = filteredOrders.map(order => `
         <tr>
             <td><span class="order-code">${order.orderCode || 'N/A'}</span></td>
             <td>
@@ -367,18 +442,18 @@ function renderOrders() {
             </td>
         </tr>
     `).join('');
-}
+        }
 
-// View order detail
-async function viewOrderDetail(orderId) {
-    currentOrderId = orderId;
-    try {
-        const response = await fetch(`/api/admin/orders/${orderId}`);
-        const order = await response.json();
-        
-        document.getElementById('modalOrderCode').textContent = order.orderCode;
-        
-        const itemsHtml = (order.items || []).map(item => `
+        // View order detail
+        async function viewOrderDetail(orderId) {
+            currentOrderId = orderId;
+            try {
+                const response = await fetch(`/api/admin/orders/${orderId}`);
+                const order = await response.json();
+
+                document.getElementById('modalOrderCode').textContent = order.orderCode;
+
+                const itemsHtml = (order.items || []).map(item => `
             <tr>
                 <td>
                     <div class="d-flex align-items-center">
@@ -392,155 +467,183 @@ async function viewOrderDetail(orderId) {
                 <td class="text-end fw-bold">${formatCurrency(item.subtotal || item.price * item.quantity)}</td>
             </tr>
         `).join('');
-        
-        document.getElementById('orderDetailContent').innerHTML = `
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <h6 class="text-muted mb-3"><i class="bi bi-person me-2"></i>Thông tin khách hàng</h6>
-                    <p class="mb-1"><strong>${order.customerName || 'N/A'}</strong></p>
-                    <p class="mb-1"><i class="bi bi-telephone me-2"></i>${order.phone || 'N/A'}</p>
-                    <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>${order.shippingAddress || 'N/A'}</p>
+
+                document.getElementById('orderDetailContent').innerHTML = `
+            <div id="printableInvoice">
+                <!-- Invoice Header cho khi in -->
+                <div class="text-center mb-4 d-none d-print-block">
+                    <h3 class="fw-bold">🛒 SHOPNEST</h3>
+                    <p class="mb-0">Hóa đơn bán hàng</p>
+                    <p class="text-muted small">Mã đơn: ${order.orderCode}</p>
+                    <hr>
                 </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Thông tin đơn hàng</h6>
-                    <p class="mb-1">Trạng thái: <span class="status-badge status-${order.status}">${getStatusLabel(order.status)}</span></p>
-                    <p class="mb-1">Thanh toán: <span class="badge ${order.paymentStatus === 'PAID' ? 'bg-success' : 'bg-warning'}">${order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></p>
-                    <p class="mb-0">Phương thức: ${order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : (order.paymentMethod || 'N/A')}</p>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3"><i class="bi bi-person me-2"></i>Thông tin khách hàng</h6>
+                        <p class="mb-1"><strong>${order.customerName || 'N/A'}</strong></p>
+                        <p class="mb-1"><i class="bi bi-telephone me-2"></i>${order.phone || 'N/A'}</p>
+                        <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>${order.shippingAddress || 'N/A'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Thông tin đơn hàng</h6>
+                        <p class="mb-1">Trạng thái: <span class="status-badge status-${order.status}">${getStatusLabel(order.status)}</span></p>
+                        <p class="mb-1">Thanh toán: <span class="badge ${order.paymentStatus === 'PAID' ? 'bg-success' : 'bg-warning'}">${order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></p>
+                        <p class="mb-0">Phương thức: ${getPaymentMethodLabel(order.paymentMethod)}</p>
+                    </div>
+                </div>
+                ${order.note ? `<div class="alert alert-info mb-4"><i class="bi bi-chat-left-text me-2"></i><strong>Ghi chú:</strong> ${order.note}</div>` : ''}
+                <h6 class="text-muted mb-3"><i class="bi bi-box me-2"></i>Sản phẩm đặt hàng</h6>
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemsHtml}</tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <td colspan="3" class="text-end fw-bold">Tổng cộng:</td>
+                            <td class="text-end fw-bold text-danger fs-5">${formatCurrency(order.totalAmount)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <!-- Footer cho khi in -->
+                <div class="text-center mt-4 d-none d-print-block">
+                    <hr>
+                    <p class="small text-muted mb-0">Cảm ơn quý khách đã mua hàng tại ShopNest!</p>
+                    <p class="small text-muted">Hotline: 1900 1234 | Email: support@shopnest.vn</p>
                 </div>
             </div>
-            ${order.note ? `<div class="alert alert-info mb-4"><i class="bi bi-chat-left-text me-2"></i><strong>Ghi chú:</strong> ${order.note}</div>` : ''}
-            <h6 class="text-muted mb-3"><i class="bi bi-box me-2"></i>Sản phẩm đặt hàng</h6>
-            <table class="table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Sản phẩm</th>
-                        <th class="text-end">Đơn giá</th>
-                        <th class="text-center">SL</th>
-                        <th class="text-end">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>${itemsHtml}</tbody>
-                <tfoot>
-                    <tr class="table-light">
-                        <td colspan="3" class="text-end fw-bold">Tổng cộng:</td>
-                        <td class="text-end fw-bold text-danger fs-5">${formatCurrency(order.totalAmount)}</td>
-                    </tr>
-                </tfoot>
-            </table>
         `;
-        
-        orderDetailModal.show();
-    } catch (error) {
-        showToast('Không thể tải chi tiết đơn hàng', 'error');
-    }
-}
 
-// Open update status modal
-function openUpdateStatus(orderId, currentStatus) {
-    document.getElementById('updateOrderId').value = orderId;
-    document.getElementById('newStatus').value = currentStatus;
-    updateStatusModal.show();
-}
-
-// Save new status
-async function saveStatus() {
-    const orderId = document.getElementById('updateOrderId').value;
-    const newStatus = document.getElementById('newStatus').value;
-    
-    try {
-        const response = await fetch(`/api/admin/orders/${orderId}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('Cập nhật trạng thái thành công!', 'success');
-            updateStatusModal.hide();
-            loadOrders();
-        } else {
-            showToast(data.error || 'Có lỗi xảy ra', 'error');
+                orderDetailModal.show();
+            } catch (error) {
+                showToast('Không thể tải chi tiết đơn hàng', 'error');
+            }
         }
-    } catch (error) {
-        showToast('Không thể cập nhật trạng thái', 'error');
-    }
-}
 
-// Toggle payment status
-async function togglePaymentStatus(orderId, currentStatus) {
-    const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
-    
-    try {
-        const response = await fetch(`/api/admin/orders/${orderId}/payment-status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentStatus: newStatus })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('Cập nhật thanh toán thành công!', 'success');
-            loadOrders();
-        } else {
-            showToast(data.error || 'Có lỗi xảy ra', 'error');
+        // Open update status modal
+        function openUpdateStatus(orderId, currentStatus) {
+            document.getElementById('updateOrderId').value = orderId;
+            document.getElementById('newStatus').value = currentStatus;
+            updateStatusModal.show();
         }
-    } catch (error) {
-        showToast('Không thể cập nhật thanh toán', 'error');
-    }
-}
 
-// Print order
-function printOrderById(orderId) {
-    viewOrderDetail(orderId).then(() => {
-        setTimeout(() => window.print(), 500);
-    });
-}
+        // Save new status
+        async function saveStatus() {
+            const orderId = document.getElementById('updateOrderId').value;
+            const newStatus = document.getElementById('newStatus').value;
 
-function printCurrentOrder() {
-    window.print();
-}
+            try {
+                const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
 
-// Clear filters
-function clearFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('statusFilter').value = '';
-    document.getElementById('paymentFilter').value = '';
-    renderOrders();
-}
+                const data = await response.json();
 
-// Helper functions
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' ₫';
-}
+                if (data.success) {
+                    showToast('Cập nhật trạng thái thành công!', 'success');
+                    updateStatusModal.hide();
+                    loadOrders();
+                } else {
+                    showToast(data.error || 'Có lỗi xảy ra', 'error');
+                }
+            } catch (error) {
+                showToast('Không thể cập nhật trạng thái', 'error');
+            }
+        }
 
-function formatDate(dateStr) {
-    if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
+        // Toggle payment status
+        async function togglePaymentStatus(orderId, currentStatus) {
+            const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
 
-function getStatusLabel(status) {
-    const labels = {
-        'PENDING': 'Chờ xử lý',
-        'CONFIRMED': 'Đã xác nhận',
-        'SHIPPING': 'Đang giao',
-        'COMPLETED': 'Hoàn thành',
-        'CANCELLED': 'Đã hủy'
-    };
-    return labels[status] || status;
-}
+            try {
+                const response = await fetch(`/api/admin/orders/${orderId}/payment-status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentStatus: newStatus })
+                });
 
-// Event listeners
-document.getElementById('searchInput').addEventListener('input', renderOrders);
-document.getElementById('statusFilter').addEventListener('change', renderOrders);
-document.getElementById('paymentFilter').addEventListener('change', renderOrders);
+                const data = await response.json();
 
-// Initial load
-document.addEventListener('DOMContentLoaded', loadOrders);
-</script>
+                if (data.success) {
+                    showToast('Cập nhật thanh toán thành công!', 'success');
+                    loadOrders();
+                } else {
+                    showToast(data.error || 'Có lỗi xảy ra', 'error');
+                }
+            } catch (error) {
+                showToast('Không thể cập nhật thanh toán', 'error');
+            }
+        }
+
+        // Print order
+        function printOrderById(orderId) {
+            viewOrderDetail(orderId).then(() => {
+                setTimeout(() => window.print(), 500);
+            });
+        }
+
+        function printCurrentOrder() {
+            window.print();
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('paymentFilter').value = '';
+            renderOrders();
+        }
+
+        // Helper functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' ₫';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'PENDING': 'Chờ xử lý',
+                'CONFIRMED': 'Đã xác nhận',
+                'SHIPPING': 'Đang giao',
+                'COMPLETED': 'Hoàn thành',
+                'CANCELLED': 'Đã hủy'
+            };
+            return labels[status] || status;
+        }
+
+        function getPaymentMethodLabel(method) {
+            const labels = {
+                'COD': 'Thanh toán khi nhận hàng',
+                'BANK_TRANSFER': 'Chuyển khoản ngân hàng',
+                'MOMO': 'Ví MoMo',
+                'VNPAY': 'VNPay'
+            };
+            return labels[method] || method || 'N/A';
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', renderOrders);
+        document.getElementById('statusFilter').addEventListener('change', renderOrders);
+        document.getElementById('paymentFilter').addEventListener('change', renderOrders);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
 
 </body>
+
 </html>

@@ -21,12 +21,11 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    // ←←←← SỬA CHỈ 1 DÒNG DUY NHẤT TẠI ĐÂY ←←←←
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        // Đảm bảo authority trong DB là "ADMIN" → sẽ thành "ROLE_ADMIN"
+        // Authority đã có prefix "ROLE_" từ UserDetailsServiceImpl, không cần thêm nữa
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
-        claims.put("role", "ROLE_" + role);  // ← Đây là dòng bắt buộc
+        claims.put("role", role);  // Authority đã là "ROLE_ADMIN" hoặc "ROLE_USER"
 
         return Jwts.builder()
                 .setClaims(claims)

@@ -41,24 +41,24 @@ public class CartViewController {
      */
     @GetMapping("/cart")
     public String cart(Model model, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() 
+        if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             return "redirect:/login";
         }
-        
+
         try {
             CartResponse cart = cartService.getCart();
             model.addAttribute("cart", cart);
             model.addAttribute("cartItems", cart.items());
-            
+
             // Tính toán các giá trị cho order summary
             java.math.BigDecimal subtotal = cart.totalPrice();
-            java.math.BigDecimal shippingFee = subtotal.compareTo(java.math.BigDecimal.valueOf(500000)) >= 0 
-                    ? java.math.BigDecimal.ZERO 
+            java.math.BigDecimal shippingFee = subtotal.compareTo(java.math.BigDecimal.valueOf(500000)) >= 0
+                    ? java.math.BigDecimal.ZERO
                     : java.math.BigDecimal.valueOf(30000);
             java.math.BigDecimal discount = java.math.BigDecimal.ZERO;
             java.math.BigDecimal total = subtotal.add(shippingFee).subtract(discount);
-            
+
             model.addAttribute("subtotal", subtotal);
             model.addAttribute("shippingFee", shippingFee);
             model.addAttribute("discount", discount);
@@ -83,20 +83,19 @@ public class CartViewController {
             @RequestParam Long productId,
             @RequestParam(defaultValue = "1") Integer quantity,
             Authentication authentication) {
-        
-        if (authentication == null || !authentication.isAuthenticated() 
+
+        if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             return ResponseEntity.status(401).body(Map.of("error", "Vui lòng đăng nhập"));
         }
-        
+
         try {
             var request = new com.sonnhuynhh.shopnest.dto.AddToCartRequest(productId, quantity);
             CartResponse cart = cartService.addToCart(request);
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Đã thêm vào giỏ hàng",
-                "cartCount", cart.totalItems()
-            ));
+                    "success", true,
+                    "message", "Đã thêm vào giỏ hàng",
+                    "cartCount", cart.totalItems()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -111,11 +110,11 @@ public class CartViewController {
             @RequestParam Long itemId,
             @RequestParam Integer quantity,
             Authentication authentication) {
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).body(Map.of("error", "Vui lòng đăng nhập"));
         }
-        
+
         try {
             CartResponse cart = cartService.updateQuantity(itemId, quantity);
             return ResponseEntity.ok(Map.of("success", true, "cartCount", cart.totalItems()));
@@ -132,11 +131,11 @@ public class CartViewController {
     public ResponseEntity<?> removeFromCart(
             @RequestParam Long itemId,
             Authentication authentication) {
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).body(Map.of("error", "Vui lòng đăng nhập"));
         }
-        
+
         try {
             cartService.removeByItemId(itemId);
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã xóa sản phẩm"));
@@ -150,33 +149,33 @@ public class CartViewController {
      */
     @GetMapping("/checkout")
     public String checkout(Model model, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() 
+        if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             return "redirect:/login";
         }
-        
+
         try {
             CartResponse cart = cartService.getCart();
             if (cart.items() == null || cart.items().isEmpty()) {
                 return "redirect:/cart";
             }
-            
+
             model.addAttribute("cart", cart);
             model.addAttribute("cartItems", cart.items());
-            
+
             // Lấy thông tin user hiện tại để điền sẵn form (hỗ trợ cả OAuth2)
             String identifier = authentication.getName();
             User currentUser = userRepository.findByUsername(identifier)
                     .or(() -> userRepository.findByEmail(identifier))
                     .orElse(null);
             model.addAttribute("currentUser", currentUser);
-            
+
             // Tính toán các giá trị cho order summary
             java.math.BigDecimal subtotal = cart.totalPrice();
             java.math.BigDecimal shippingFee = java.math.BigDecimal.valueOf(30000);
             java.math.BigDecimal discount = java.math.BigDecimal.ZERO;
             java.math.BigDecimal total = subtotal.add(shippingFee).subtract(discount);
-            
+
             model.addAttribute("subtotal", subtotal);
             model.addAttribute("shippingFee", shippingFee);
             model.addAttribute("discount", discount);
@@ -205,47 +204,46 @@ public class CartViewController {
             @RequestParam(required = false, defaultValue = "STANDARD") String shippingMethod,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
-        
-        if (authentication == null || !authentication.isAuthenticated() 
+
+        if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             return "redirect:/login";
         }
-        
+
         try {
             // Build full address
             String fullAddress = address + ", " + ward + ", " + district + ", " + province;
-            
+
             // Map payment method string to enum
             PaymentMethod paymentMethodEnum = switch (paymentMethod) {
                 case "BANKING" -> PaymentMethod.BANK_TRANSFER;
                 case "MOMO" -> PaymentMethod.MOMO;
-                case "VNPAY" -> PaymentMethod.VNPAY;
                 default -> PaymentMethod.COD;
             };
-            
+
             // Create checkout request
             CheckoutRequest checkoutRequest = new CheckoutRequest(
                     fullAddress,
                     phone,
                     fullName,
                     note,
-                    paymentMethodEnum
-            );
-            
+                    paymentMethodEnum);
+
             // Xử lý thanh toán MoMo
             if (paymentMethodEnum == PaymentMethod.MOMO) {
                 // Kiểm tra MoMo đã được cấu hình chưa
                 if (!moMoService.isConfigured()) {
-                    redirectAttributes.addFlashAttribute("error", "Thanh toán MoMo chưa được cấu hình. Vui lòng chọn phương thức khác.");
+                    redirectAttributes.addFlashAttribute("error",
+                            "Thanh toán MoMo chưa được cấu hình. Vui lòng chọn phương thức khác.");
                     return "redirect:/checkout";
                 }
-                
+
                 // Tạo đơn hàng (chưa xóa giỏ hàng)
                 Order order = orderService.createOrder(checkoutRequest);
-                
+
                 // Tạo payment request MoMo
                 MoMoPaymentResponse moMoResponse = moMoService.createPayment(order);
-                
+
                 if (moMoResponse.isSuccess() && moMoResponse.getPayUrl() != null) {
                     log.info("Redirecting to MoMo payment: {}", moMoResponse.getPayUrl());
                     // Xóa giỏ hàng sau khi tạo order thành công
@@ -254,19 +252,20 @@ public class CartViewController {
                     return "redirect:" + moMoResponse.getPayUrl();
                 } else {
                     log.error("MoMo payment creation failed: {}", moMoResponse.getMessage());
-                    redirectAttributes.addFlashAttribute("error", "Không thể tạo thanh toán MoMo: " + moMoResponse.getMessage());
+                    redirectAttributes.addFlashAttribute("error",
+                            "Không thể tạo thanh toán MoMo: " + moMoResponse.getMessage());
                     return "redirect:/checkout";
                 }
             }
-            
-            // Xử lý các phương thức thanh toán khác (COD, Bank Transfer, VNPay)
+
+            // Xử lý các phương thức thanh toán khác (COD, Bank Transfer)
             OrderResponse order = orderService.checkout(checkoutRequest);
-            
+
             // Redirect to success page with order info
             redirectAttributes.addFlashAttribute("order", order);
             redirectAttributes.addFlashAttribute("orderCode", order.orderCode());
             return "redirect:/order-success";
-            
+
         } catch (Exception e) {
             log.error("Checkout failed: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Đặt hàng thất bại: " + e.getMessage());

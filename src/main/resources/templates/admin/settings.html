@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,385 +9,398 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/admin.css}" href="/css/admin.css" rel="stylesheet">
 </head>
+
 <body>
 
-<div class="admin-wrapper">
-    <!-- Sidebar -->
-    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('settings')}"></aside>
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <aside th:replace="~{admin/fragments/admin-layout :: sidebar('settings')}"></aside>
 
-    <!-- Main Content -->
-    <main class="admin-main">
-        <header class="admin-header">
-            <button class="btn btn-link d-lg-none me-2" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h5 class="mb-0 fw-bold">Cài đặt hệ thống</h5>
-        </header>
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <button class="btn btn-link d-lg-none me-2" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+                <h5 class="mb-0 fw-bold">Cài đặt hệ thống</h5>
+            </header>
 
-        <div class="admin-content">
-            <div class="row g-4">
-                <!-- Settings Navigation -->
-                <div class="col-lg-3">
-                    <div class="card border-0 shadow-sm">
-                        <div class="list-group list-group-flush">
-                            <a href="#general" class="list-group-item list-group-item-action active" data-bs-toggle="list">
-                                <i class="bi bi-sliders me-2"></i>Cài đặt chung
-                            </a>
-                            <a href="#store" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                                <i class="bi bi-shop me-2"></i>Thông tin cửa hàng
-                            </a>
-                            <a href="#payment" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                                <i class="bi bi-credit-card me-2"></i>Thanh toán
-                            </a>
-                            <a href="#shipping" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                                <i class="bi bi-truck me-2"></i>Vận chuyển
-                            </a>
-                            <a href="#email" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                                <i class="bi bi-envelope me-2"></i>Email
-                            </a>
-                            <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                                <i class="bi bi-shield-lock me-2"></i>Bảo mật
-                            </a>
+            <div class="admin-content">
+                <div class="row g-4">
+                    <!-- Settings Navigation -->
+                    <div class="col-lg-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="list-group list-group-flush">
+                                <a href="#general" class="list-group-item list-group-item-action active"
+                                    data-bs-toggle="list">
+                                    <i class="bi bi-sliders me-2"></i>Cài đặt chung
+                                </a>
+                                <a href="#store" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                    <i class="bi bi-shop me-2"></i>Thông tin cửa hàng
+                                </a>
+                                <a href="#payment" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                    <i class="bi bi-credit-card me-2"></i>Thanh toán
+                                </a>
+                                <a href="#shipping" class="list-group-item list-group-item-action"
+                                    data-bs-toggle="list">
+                                    <i class="bi bi-truck me-2"></i>Vận chuyển
+                                </a>
+                                <a href="#email" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                    <i class="bi bi-envelope me-2"></i>Email
+                                </a>
+                                <a href="#security" class="list-group-item list-group-item-action"
+                                    data-bs-toggle="list">
+                                    <i class="bi bi-shield-lock me-2"></i>Bảo mật
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Settings Content -->
-                <div class="col-lg-9">
-                    <div class="tab-content">
-                        <!-- General Settings -->
-                        <div class="tab-pane fade show active" id="general">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-0 py-3">
-                                    <h6 class="fw-bold mb-0">Cài đặt chung</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Tên website</label>
-                                                <input type="text" class="form-control" value="ShopNest">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Tagline</label>
-                                                <input type="text" class="form-control" value="Mua sắm thông minh, sống chất lượng">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Ngôn ngữ mặc định</label>
-                                                <select class="form-select">
-                                                    <option selected>Tiếng Việt</option>
-                                                    <option>English</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Múi giờ</label>
-                                                <select class="form-select">
-                                                    <option selected>Asia/Ho_Chi_Minh (UTC+7)</option>
-                                                    <option>Asia/Bangkok (UTC+7)</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Đơn vị tiền tệ</label>
-                                                <select class="form-select">
-                                                    <option selected>VND (₫)</option>
-                                                    <option>USD ($)</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Số sản phẩm/trang</label>
-                                                <input type="number" class="form-control" value="12">
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="maintenanceMode">
-                                                    <label class="form-check-label" for="maintenanceMode">Chế độ bảo trì</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Store Info -->
-                        <div class="tab-pane fade" id="store">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-0 py-3">
-                                    <h6 class="fw-bold mb-0">Thông tin cửa hàng</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <label class="form-label">Logo</label>
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <img src="https://placehold.co/100x40" alt="Logo" class="border rounded">
-                                                    <button type="button" class="btn btn-outline-primary btn-sm">Thay đổi</button>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Email liên hệ</label>
-                                                <input type="email" class="form-control" value="contact@shopnest.vn">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Hotline</label>
-                                                <input type="tel" class="form-control" value="1900 1234">
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label">Địa chỉ</label>
-                                                <textarea class="form-control" rows="2">123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</textarea>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Facebook</label>
-                                                <input type="url" class="form-control" placeholder="https://facebook.com/...">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Instagram</label>
-                                                <input type="url" class="form-control" placeholder="https://instagram.com/...">
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Payment Settings -->
-                        <div class="tab-pane fade" id="payment">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-0 py-3">
-                                    <h6 class="fw-bold mb-0">Cài đặt thanh toán</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="payment-method border rounded p-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <i class="bi bi-cash-stack fs-4 text-success"></i>
-                                                <div>
-                                                    <h6 class="mb-0">Thanh toán khi nhận hàng (COD)</h6>
-                                                    <small class="text-muted">Khách hàng thanh toán trực tiếp cho shipper</small>
-                                                </div>
-                                            </div>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" checked>
-                                            </div>
-                                        </div>
+                    <!-- Settings Content -->
+                    <div class="col-lg-9">
+                        <div class="tab-content">
+                            <!-- General Settings -->
+                            <div class="tab-pane fade show active" id="general">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h6 class="fw-bold mb-0">Cài đặt chung</h6>
                                     </div>
-                                    <div class="payment-method border rounded p-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <i class="bi bi-bank fs-4 text-primary"></i>
-                                                <div>
-                                                    <h6 class="mb-0">Chuyển khoản ngân hàng</h6>
-                                                    <small class="text-muted">Chuyển khoản trước khi giao hàng</small>
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Tên website</label>
+                                                    <input type="text" class="form-control" value="ShopNest">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Tagline</label>
+                                                    <input type="text" class="form-control"
+                                                        value="Mua sắm thông minh, sống chất lượng">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Ngôn ngữ mặc định</label>
+                                                    <select class="form-select">
+                                                        <option selected>Tiếng Việt</option>
+                                                        <option>English</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Múi giờ</label>
+                                                    <select class="form-select">
+                                                        <option selected>Asia/Ho_Chi_Minh (UTC+7)</option>
+                                                        <option>Asia/Bangkok (UTC+7)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Đơn vị tiền tệ</label>
+                                                    <select class="form-select">
+                                                        <option selected>VND (₫)</option>
+                                                        <option>USD ($)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Số sản phẩm/trang</label>
+                                                    <input type="number" class="form-control" value="12">
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="maintenanceMode">
+                                                        <label class="form-check-label" for="maintenanceMode">Chế độ bảo
+                                                            trì</label>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" checked>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="payment-method border rounded p-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <i class="bi bi-credit-card fs-4 text-info"></i>
-                                                <div>
-                                                    <h6 class="mb-0">VNPay</h6>
-                                                    <small class="text-muted">Thanh toán qua cổng VNPay</small>
-                                                </div>
-                                            </div>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="payment-method border rounded p-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <i class="bi bi-wallet2 fs-4 text-warning"></i>
-                                                <div>
-                                                    <h6 class="mb-0">MoMo</h6>
-                                                    <small class="text-muted">Thanh toán qua ví MoMo</small>
-                                                </div>
-                                            </div>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Shipping Settings -->
-                        <div class="tab-pane fade" id="shipping">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Cài đặt vận chuyển</h6>
-                                    <button class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-plus-lg me-1"></i>Thêm phương thức
-                                    </button>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table align-middle">
-                                            <thead class="table-light">
-                                            <tr>
-                                                <th>Phương thức</th>
-                                                <th>Phí ship</th>
-                                                <th>Miễn phí từ</th>
-                                                <th>Trạng thái</th>
-                                                <th></th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            <tr>
-                                                <td>Giao hàng tiêu chuẩn</td>
-                                                <td>30.000 ₫</td>
-                                                <td>500.000 ₫</td>
-                                                <td><span class="badge bg-success">Hoạt động</span></td>
-                                                <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></button></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Giao hàng nhanh</td>
-                                                <td>50.000 ₫</td>
-                                                <td>1.000.000 ₫</td>
-                                                <td><span class="badge bg-success">Hoạt động</span></td>
-                                                <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></button></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Giao hàng hỏa tốc</td>
-                                                <td>80.000 ₫</td>
-                                                <td>-</td>
-                                                <td><span class="badge bg-secondary">Tắt</span></td>
-                                                <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></button></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Email Settings -->
-                        <div class="tab-pane fade" id="email">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-0 py-3">
-                                    <h6 class="fw-bold mb-0">Cài đặt Email</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">SMTP Host</label>
-                                                <input type="text" class="form-control" placeholder="smtp.gmail.com">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">SMTP Port</label>
-                                                <input type="number" class="form-control" placeholder="587">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Email</label>
-                                                <input type="email" class="form-control" placeholder="noreply@shopnest.vn">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Mật khẩu</label>
-                                                <input type="password" class="form-control">
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="enableSSL" checked>
-                                                    <label class="form-check-label" for="enableSSL">Bật SSL/TLS</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                        <div class="d-flex gap-2">
+                                            <hr class="my-4">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
                                             </button>
-                                            <button type="button" class="btn btn-outline-secondary">
-                                                <i class="bi bi-send me-2"></i>Gửi email test
-                                            </button>
-                                        </div>
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Security Settings -->
-                        <div class="tab-pane fade" id="security">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-0 py-3">
-                                    <h6 class="fw-bold mb-0">Cài đặt bảo mật</h6>
+                            <!-- Store Info -->
+                            <div class="tab-pane fade" id="store">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h6 class="fw-bold mb-0">Thông tin cửa hàng</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label">Logo</label>
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <img src="https://placehold.co/100x40" alt="Logo"
+                                                            class="border rounded">
+                                                        <button type="button"
+                                                            class="btn btn-outline-primary btn-sm">Thay đổi</button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Email liên hệ</label>
+                                                    <input type="email" class="form-control"
+                                                        value="contact@shopnest.vn">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Hotline</label>
+                                                    <input type="tel" class="form-control" value="1900 1234">
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Địa chỉ</label>
+                                                    <textarea class="form-control"
+                                                        rows="2">123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</textarea>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Facebook</label>
+                                                    <input type="url" class="form-control"
+                                                        placeholder="https://facebook.com/...">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Instagram</label>
+                                                    <input type="url" class="form-control"
+                                                        placeholder="https://instagram.com/...">
+                                                </div>
+                                            </div>
+                                            <hr class="my-4">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="mb-4">
-                                        <h6 class="fw-semibold">Xác thực 2 yếu tố (2FA)</h6>
-                                        <p class="text-muted small">Bảo vệ tài khoản admin bằng xác thực 2 yếu tố</p>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="enable2FA">
-                                            <label class="form-check-label" for="enable2FA">Bật 2FA cho tất cả admin</label>
-                                        </div>
+                            </div>
+
+                            <!-- Payment Settings -->
+                            <div class="tab-pane fade" id="payment">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h6 class="fw-bold mb-0">Cài đặt thanh toán</h6>
                                     </div>
-                                    <hr>
-                                    <div class="mb-4">
-                                        <h6 class="fw-semibold">Chính sách mật khẩu</h6>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Độ dài tối thiểu</label>
-                                                <input type="number" class="form-control" value="8">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Thời hạn mật khẩu (ngày)</label>
-                                                <input type="number" class="form-control" value="90" placeholder="0 = không giới hạn">
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" checked>
-                                                    <label class="form-check-label">Yêu cầu ký tự đặc biệt</label>
+                                    <div class="card-body">
+                                        <div class="payment-method border rounded p-3 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <i class="bi bi-cash-stack fs-4 text-success"></i>
+                                                    <div>
+                                                        <h6 class="mb-0">Thanh toán khi nhận hàng (COD)</h6>
+                                                        <small class="text-muted">Khách hàng thanh toán trực tiếp cho
+                                                            shipper</small>
+                                                    </div>
                                                 </div>
-                                                <div class="form-check">
+                                                <div class="form-check form-switch">
                                                     <input class="form-check-input" type="checkbox" checked>
-                                                    <label class="form-check-label">Yêu cầu chữ hoa và số</label>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <hr>
-                                    <div>
-                                        <h6 class="fw-semibold">Phiên đăng nhập</h6>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Thời gian hết hạn session (phút)</label>
-                                                <input type="number" class="form-control" value="60">
+                                        <div class="payment-method border rounded p-3 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <i class="bi bi-bank fs-4 text-primary"></i>
+                                                    <div>
+                                                        <h6 class="mb-0">Chuyển khoản ngân hàng</h6>
+                                                        <small class="text-muted">Chuyển khoản trước khi giao
+                                                            hàng</small>
+                                                    </div>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" checked>
+                                                </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Số lần đăng nhập sai tối đa</label>
-                                                <input type="number" class="form-control" value="5">
+                                        </div>
+                                        <div class="payment-method border rounded p-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <i class="bi bi-wallet2 fs-4 text-warning"></i>
+                                                    <div>
+                                                        <h6 class="mb-0">MoMo</h6>
+                                                        <small class="text-muted">Thanh toán qua ví MoMo</small>
+                                                    </div>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <hr class="my-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
-                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Shipping Settings -->
+                            <div class="tab-pane fade" id="shipping">
+                                <div class="card border-0 shadow-sm">
+                                    <div
+                                        class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Cài đặt vận chuyển</h6>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-plus-lg me-1"></i>Thêm phương thức
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table align-middle">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Phương thức</th>
+                                                        <th>Phí ship</th>
+                                                        <th>Miễn phí từ</th>
+                                                        <th>Trạng thái</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Giao hàng tiêu chuẩn</td>
+                                                        <td>30.000 ₫</td>
+                                                        <td>500.000 ₫</td>
+                                                        <td><span class="badge bg-success">Hoạt động</span></td>
+                                                        <td><button class="btn btn-sm btn-outline-secondary"><i
+                                                                    class="bi bi-pencil"></i></button></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Giao hàng nhanh</td>
+                                                        <td>50.000 ₫</td>
+                                                        <td>1.000.000 ₫</td>
+                                                        <td><span class="badge bg-success">Hoạt động</span></td>
+                                                        <td><button class="btn btn-sm btn-outline-secondary"><i
+                                                                    class="bi bi-pencil"></i></button></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Giao hàng hỏa tốc</td>
+                                                        <td>80.000 ₫</td>
+                                                        <td>-</td>
+                                                        <td><span class="badge bg-secondary">Tắt</span></td>
+                                                        <td><button class="btn btn-sm btn-outline-secondary"><i
+                                                                    class="bi bi-pencil"></i></button></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Email Settings -->
+                            <div class="tab-pane fade" id="email">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h6 class="fw-bold mb-0">Cài đặt Email</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">SMTP Host</label>
+                                                    <input type="text" class="form-control"
+                                                        placeholder="smtp.gmail.com">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">SMTP Port</label>
+                                                    <input type="number" class="form-control" placeholder="587">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" class="form-control"
+                                                        placeholder="noreply@shopnest.vn">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Mật khẩu</label>
+                                                    <input type="password" class="form-control">
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="enableSSL"
+                                                            checked>
+                                                        <label class="form-check-label" for="enableSSL">Bật
+                                                            SSL/TLS</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr class="my-4">
+                                            <div class="d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary">
+                                                    <i class="bi bi-send me-2"></i>Gửi email test
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Security Settings -->
+                            <div class="tab-pane fade" id="security">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h6 class="fw-bold mb-0">Cài đặt bảo mật</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-4">
+                                            <h6 class="fw-semibold">Xác thực 2 yếu tố (2FA)</h6>
+                                            <p class="text-muted small">Bảo vệ tài khoản admin bằng xác thực 2 yếu tố
+                                            </p>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enable2FA">
+                                                <label class="form-check-label" for="enable2FA">Bật 2FA cho tất cả
+                                                    admin</label>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="mb-4">
+                                            <h6 class="fw-semibold">Chính sách mật khẩu</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Độ dài tối thiểu</label>
+                                                    <input type="number" class="form-control" value="8">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Thời hạn mật khẩu (ngày)</label>
+                                                    <input type="number" class="form-control" value="90"
+                                                        placeholder="0 = không giới hạn">
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" checked>
+                                                        <label class="form-check-label">Yêu cầu ký tự đặc biệt</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" checked>
+                                                        <label class="form-check-label">Yêu cầu chữ hoa và số</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div>
+                                            <h6 class="fw-semibold">Phiên đăng nhập</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Thời gian hết hạn session (phút)</label>
+                                                    <input type="number" class="form-control" value="60">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Số lần đăng nhập sai tối đa</label>
+                                                    <input type="number" class="form-control" value="5">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-4">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-lg me-2"></i>Lưu thay đổi
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-</div>
+        </main>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+
 </html>

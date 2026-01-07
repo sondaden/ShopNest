@@ -2,5 +2,5 @@
 package com.sonnhuynhh.shopnest.model;
 
 public enum PaymentMethod {
-    COD, BANK_TRANSFER, MOMO, VNPAY
+    COD, BANK_TRANSFER, MOMO
 }

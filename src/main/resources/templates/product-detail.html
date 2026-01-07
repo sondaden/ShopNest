@@ -1,454 +1,495 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{fragments/header :: head}">
     <title>Chi tiết sản phẩm - ShopNest</title>
 </head>
+
 <body>
-<style>
-    .thumbnail {
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .thumbnail:hover {
-        border-color: #0d6efd;
-        transform: scale(1.05);
-    }
-    .thumbnail.active {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
-    }
-    .main-image-container {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    .main-image-container img {
-        transition: transform 0.3s ease;
-    }
-    .main-image-container:hover img {
-        transform: scale(1.02);
-    }
-    
-    /* Star Rating Styles */
-    .star-rating {
-        display: inline-flex;
-        gap: 5px;
-        cursor: pointer;
-    }
-    .star-rating i {
-        color: #ddd;
-        transition: all 0.2s ease;
-    }
-    .star-rating i:hover,
-    .star-rating i.hovered,
-    .star-rating i.selected {
-        color: #ffc107;
-    }
-    .star-rating i.bi-star-fill {
-        color: #ffc107;
-    }
-    
-    /* Review Card Styles */
-    .review-card {
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-    .review-card:hover {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    .review-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: cover;
-        background: #e9ecef;
-    }
-    .review-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-    .review-meta {
-        flex-grow: 1;
-    }
-    .review-author {
-        font-weight: 600;
-        color: #2d3436;
-        margin-bottom: 2px;
-    }
-    .review-date {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    .review-stars {
-        color: #ffc107;
-        margin-bottom: 8px;
-    }
-    .review-comment {
-        color: #495057;
-        line-height: 1.6;
-    }
-    .review-actions {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid #e9ecef;
-    }
-    
-    /* Rating Summary */
-    .rating-summary {
-        background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
-    }
-</style>
+    <style>
+        .thumbnail {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-<!-- Navbar -->
-<nav th:replace="~{fragments/header :: navbar}"></nav>
+        .thumbnail:hover {
+            border-color: #0d6efd;
+            transform: scale(1.05);
+        }
 
-<!-- Breadcrumb -->
-<nav aria-label="breadcrumb" class="bg-light py-2">
-    <div class="container">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a th:href="@{/}"><i class="bi bi-house"></i> Trang chủ</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
-            <li class="breadcrumb-item" th:if="${product.category != null}">
-                <a th:href="@{/products(categoryId=${product.category.id})}" th:text="${product.category.name}">Danh mục</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Tên sản phẩm</li>
-        </ol>
-    </div>
-</nav>
+        .thumbnail.active {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+        }
 
-<!-- Product Detail Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row g-4">
-            <!-- Product Images -->
-            <div class="col-lg-5">
-                <div class="product-gallery">
-                    <!-- Main Image -->
-                    <div class="main-image-container mb-3">
-                        <img id="mainImage" 
-                             th:src="${productImages != null and !productImages.isEmpty()} ? ${productImages[0].imageUrl} : (${product.imageUrl != null} ? ${product.imageUrl} : '/images/no-image.svg')"
-                             class="img-fluid rounded shadow-sm w-100"
-                             th:alt="${product.name}"
-                             style="max-height: 450px; object-fit: contain; background: #f8f9fa;"
-                             onerror="this.src='/images/no-image.svg'">
-                    </div>
-                    <!-- Thumbnail Images -->
-                    <div class="thumbnail-images d-flex gap-2 flex-wrap">
-                        <!-- Hiển thị tất cả ảnh nếu có -->
-                        <th:block th:if="${productImages != null and !productImages.isEmpty()}">
-                            <div th:each="img, iterStat : ${productImages}" 
-                                 class="thumbnail" 
-                                 th:classappend="${iterStat.first} ? 'active' : ''"
-                                 style="width: 70px; height: 70px;">
-                                <img th:src="${img.imageUrl}"
-                                     th:data-full-url="${img.imageUrl}"
-                                     class="img-fluid rounded border"
-                                     style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
-                                     onerror="this.src='/images/no-image.svg'">
-                            </div>
-                        </th:block>
-                        <!-- Fallback nếu không có ảnh trong danh sách nhưng có imageUrl -->
-                        <th:block th:if="${(productImages == null or productImages.isEmpty()) and product.imageUrl != null}">
-                            <div class="thumbnail active" style="width: 70px; height: 70px;">
-                                <img th:src="${product.imageUrl}"
-                                     th:data-full-url="${product.imageUrl}"
-                                     class="img-fluid rounded border"
-                                     style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
-                                     onerror="this.src='/images/no-image.svg'">
-                            </div>
-                        </th:block>
-                        <!-- Hiển thị placeholder nếu không có ảnh -->
-                        <th:block th:if="${(productImages == null or productImages.isEmpty()) and product.imageUrl == null}">
-                            <div class="thumbnail active" style="width: 70px; height: 70px;">
-                                <img src="/images/no-image.svg"
-                                     class="img-fluid rounded border"
-                                     style="width: 100%; height: 100%; object-fit: cover;">
-                            </div>
-                        </th:block>
+        .main-image-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .main-image-container img {
+            transition: transform 0.3s ease;
+        }
+
+        .main-image-container:hover img {
+            transform: scale(1.02);
+        }
+
+        /* Star Rating Styles */
+        .star-rating {
+            display: inline-flex;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .star-rating i {
+            color: #ddd;
+            transition: all 0.2s ease;
+        }
+
+        .star-rating i:hover,
+        .star-rating i.hovered,
+        .star-rating i.selected {
+            color: #ffc107;
+        }
+
+        .star-rating i.bi-star-fill {
+            color: #ffc107;
+        }
+
+        /* Review Card Styles */
+        .review-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .review-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .review-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e9ecef;
+        }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .review-meta {
+            flex-grow: 1;
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 2px;
+        }
+
+        .review-date {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .review-stars {
+            color: #ffc107;
+            margin-bottom: 8px;
+        }
+
+        .review-comment {
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .review-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* Rating Summary */
+        .rating-summary {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+        }
+    </style>
+
+    <!-- Navbar -->
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="bg-light py-2">
+        <div class="container">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a th:href="@{/}"><i class="bi bi-house"></i> Trang chủ</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
+                <li class="breadcrumb-item" th:if="${product.category != null}">
+                    <a th:href="@{/products(categoryId=${product.category.id})}" th:text="${product.category.name}">Danh
+                        mục</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Tên sản phẩm</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Product Detail Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Product Images -->
+                <div class="col-lg-5">
+                    <div class="product-gallery">
+                        <!-- Main Image -->
+                        <div class="main-image-container mb-3">
+                            <img id="mainImage"
+                                th:src="${productImages != null and !productImages.isEmpty()} ? ${productImages[0].imageUrl} : (${product.imageUrl != null} ? ${product.imageUrl} : '/images/no-image.svg')"
+                                class="img-fluid rounded shadow-sm w-100" th:alt="${product.name}"
+                                style="max-height: 450px; object-fit: contain; background: #f8f9fa;"
+                                onerror="this.src='/images/no-image.svg'">
+                        </div>
+                        <!-- Thumbnail Images -->
+                        <div class="thumbnail-images d-flex gap-2 flex-wrap">
+                            <!-- Hiển thị tất cả ảnh nếu có -->
+                            <th:block th:if="${productImages != null and !productImages.isEmpty()}">
+                                <div th:each="img, iterStat : ${productImages}" class="thumbnail"
+                                    th:classappend="${iterStat.first} ? 'active' : ''"
+                                    style="width: 70px; height: 70px;">
+                                    <img th:src="${img.imageUrl}" th:data-full-url="${img.imageUrl}"
+                                        class="img-fluid rounded border"
+                                        style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                                        onerror="this.src='/images/no-image.svg'">
+                                </div>
+                            </th:block>
+                            <!-- Fallback nếu không có ảnh trong danh sách nhưng có imageUrl -->
+                            <th:block
+                                th:if="${(productImages == null or productImages.isEmpty()) and product.imageUrl != null}">
+                                <div class="thumbnail active" style="width: 70px; height: 70px;">
+                                    <img th:src="${product.imageUrl}" th:data-full-url="${product.imageUrl}"
+                                        class="img-fluid rounded border"
+                                        style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                                        onerror="this.src='/images/no-image.svg'">
+                                </div>
+                            </th:block>
+                            <!-- Hiển thị placeholder nếu không có ảnh -->
+                            <th:block
+                                th:if="${(productImages == null or productImages.isEmpty()) and product.imageUrl == null}">
+                                <div class="thumbnail active" style="width: 70px; height: 70px;">
+                                    <img src="/images/no-image.svg" class="img-fluid rounded border"
+                                        style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            </th:block>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Product Info -->
-            <div class="col-lg-7">
-                <div class="product-info">
-                    <!-- Category & Brand -->
-                    <div class="d-flex gap-2 mb-2">
-                        <span th:if="${product.category != null}" class="badge bg-primary" th:text="${product.category.name}">Category</span>
-                        <span th:if="${product.brand != null}" class="badge bg-secondary" th:text="${product.brand.name}">Brand</span>
-                    </div>
+                <!-- Product Info -->
+                <div class="col-lg-7">
+                    <div class="product-info">
+                        <!-- Category & Brand -->
+                        <div class="d-flex gap-2 mb-2">
+                            <span th:if="${product.category != null}" class="badge bg-primary"
+                                th:text="${product.category.name}">Category</span>
+                            <span th:if="${product.brand != null}" class="badge bg-secondary"
+                                th:text="${product.brand.name}">Brand</span>
+                        </div>
 
-                    <!-- Product Name -->
-                    <h1 class="h2 fw-bold mb-3" th:text="${product.name}">Tên sản phẩm</h1>
+                        <!-- Product Name -->
+                        <h1 class="h2 fw-bold mb-3" th:text="${product.name}">Tên sản phẩm</h1>
 
-                    <!-- Rating -->
-                    <div class="d-flex align-items-center mb-3" th:if="${product.rating != null}">
-                        <div class="rating me-2">
-                            <span th:each="i : ${#numbers.sequence(1, 5)}">
-                                <i th:class="${i <= product.rating ? 'bi bi-star-fill text-warning' : (i <= product.rating + 0.5 ? 'bi bi-star-half text-warning' : 'bi bi-star text-warning')}"></i>
+                        <!-- Rating -->
+                        <div class="d-flex align-items-center mb-3" th:if="${product.rating != null}">
+                            <div class="rating me-2">
+                                <span th:each="i : ${#numbers.sequence(1, 5)}">
+                                    <i
+                                        th:class="${i <= product.rating ? 'bi bi-star-fill text-warning' : (i <= product.rating + 0.5 ? 'bi bi-star-half text-warning' : 'bi bi-star text-warning')}"></i>
+                                </span>
+                            </div>
+                            <span class="text-muted">(<span th:text="${product.rating}">4.5</span>/5)</span>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="price-section mb-4">
+                            <span class="h3 text-danger fw-bold me-2"
+                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">999,000
+                                ₫</span>
+                        </div>
+
+                        <!-- Stock Status -->
+                        <div class="stock-status mb-4">
+                            <span th:if="${product.stock > 10}" class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Còn hàng (<span
+                                    th:text="${product.stock}">100</span> sản phẩm)
+                            </span>
+                            <span th:if="${product.stock > 0 && product.stock <= 10}"
+                                class="badge bg-warning text-dark">
+                                <i class="bi bi-exclamation-circle me-1"></i>Sắp hết hàng (Còn <span
+                                    th:text="${product.stock}">5</span> sản phẩm)
+                            </span>
+                            <span th:if="${product.stock == 0}" class="badge bg-danger">
+                                <i class="bi bi-x-circle me-1"></i>Hết hàng
                             </span>
                         </div>
-                        <span class="text-muted">(<span th:text="${product.rating}">4.5</span>/5)</span>
-                    </div>
 
-                    <!-- Price -->
-                    <div class="price-section mb-4">
-                        <span class="h3 text-danger fw-bold me-2" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">999,000 ₫</span>
-                    </div>
-
-                    <!-- Stock Status -->
-                    <div class="stock-status mb-4">
-                        <span th:if="${product.stock > 10}" class="badge bg-success">
-                            <i class="bi bi-check-circle me-1"></i>Còn hàng (<span th:text="${product.stock}">100</span> sản phẩm)
-                        </span>
-                        <span th:if="${product.stock > 0 && product.stock <= 10}" class="badge bg-warning text-dark">
-                            <i class="bi bi-exclamation-circle me-1"></i>Sắp hết hàng (Còn <span th:text="${product.stock}">5</span> sản phẩm)
-                        </span>
-                        <span th:if="${product.stock == 0}" class="badge bg-danger">
-                            <i class="bi bi-x-circle me-1"></i>Hết hàng
-                        </span>
-                    </div>
-
-                    <!-- Short Description -->
-                    <div class="description mb-4" th:if="${product.description != null}">
-                        <p class="text-muted" th:text="${product.description}">Mô tả ngắn về sản phẩm...</p>
-                    </div>
-
-                    <!-- Quantity & Add to Cart -->
-                    <div class="add-to-cart-section mb-4" th:if="${product.stock > 0}">
-                        <div class="row g-3 align-items-center">
-                            <div class="col-auto">
-                                <label class="form-label mb-0 fw-semibold">Số lượng:</label>
-                            </div>
-                            <div class="col-auto">
-                                <div class="input-group" style="width: 140px;">
-                                    <button class="btn btn-outline-secondary" type="button" id="decreaseQty">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" id="quantity" class="form-control text-center" 
-                                           value="1" min="1" th:max="${product.stock}">
-                                    <button class="btn btn-outline-secondary" type="button" id="increaseQty">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <!-- Short Description -->
+                        <div class="description mb-4" th:if="${product.description != null}">
+                            <p class="text-muted" th:text="${product.description}">Mô tả ngắn về sản phẩm...</p>
                         </div>
 
-                        <div class="d-flex gap-3 mt-4">
-                            <button class="btn btn-primary btn-lg flex-grow-1" 
-                                    id="btnAddToCart"
+                        <!-- Quantity & Add to Cart -->
+                        <div class="add-to-cart-section mb-4" th:if="${product.stock > 0}">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-auto">
+                                    <label class="form-label mb-0 fw-semibold">Số lượng:</label>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="input-group" style="width: 140px;">
+                                        <button class="btn btn-outline-secondary" type="button" id="decreaseQty">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="number" id="quantity" class="form-control text-center" value="1"
+                                            min="1" th:max="${product.stock}">
+                                        <button class="btn btn-outline-secondary" type="button" id="increaseQty">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-3 mt-4">
+                                <button class="btn btn-primary btn-lg flex-grow-1" id="btnAddToCart"
                                     th:data-product-id="${product.id}">
-                                <i class="bi bi-cart-plus me-2"></i>Thêm vào giỏ hàng
-                            </button>
-                            <button class="btn btn-outline-danger btn-lg" id="btnWishlist" title="Thêm vào yêu thích">
-                                <i class="bi bi-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Out of Stock Message -->
-                    <div th:if="${product.stock == 0}" class="alert alert-warning">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Sản phẩm tạm hết hàng. Vui lòng quay lại sau hoặc liên hệ hotline để được hỗ trợ.
-                    </div>
-
-                    <!-- Product Meta -->
-                    <div class="product-meta border-top pt-4 mt-4">
-                        <div class="row g-3">
-                            <div class="col-6" th:if="${product.brand != null}">
-                                <small class="text-muted d-block">Thương hiệu</small>
-                                <strong th:text="${product.brand.name}">Brand</strong>
-                            </div>
-                            <div class="col-6" th:if="${product.category != null}">
-                                <small class="text-muted d-block">Danh mục</small>
-                                <strong th:text="${product.category.name}">Category</strong>
-                            </div>
-                            <div class="col-6" th:if="${product.importDate != null}">
-                                <small class="text-muted d-block">Ngày nhập</small>
-                                <strong th:text="${#temporals.format(product.importDate, 'dd/MM/yyyy')}">01/01/2024</strong>
-                            </div>
-                            <div class="col-6" th:if="${product.expirationDate != null}">
-                                <small class="text-muted d-block">Hạn sử dụng</small>
-                                <strong th:text="${#temporals.format(product.expirationDate, 'dd/MM/yyyy')}">01/01/2025</strong>
+                                    <i class="bi bi-cart-plus me-2"></i>Thêm vào giỏ hàng
+                                </button>
+                                <button class="btn btn-danger btn-lg flex-grow-1" id="btnBuyNow"
+                                    th:data-product-id="${product.id}">
+                                    <i class="bi bi-bag-check me-2"></i>Mua ngay
+                                </button>
+                                <button class="btn btn-outline-danger btn-lg" id="btnWishlist"
+                                    title="Thêm vào yêu thích">
+                                    <i class="bi bi-heart"></i>
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Benefits -->
-                    <div class="benefits mt-4">
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center text-success">
-                                    <i class="bi bi-truck me-2"></i>
-                                    <small>Miễn phí vận chuyển đơn từ 500K</small>
+                        <!-- Out of Stock Message -->
+                        <div th:if="${product.stock == 0}" class="alert alert-warning">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Sản phẩm tạm hết hàng. Vui lòng quay lại sau hoặc liên hệ hotline để được hỗ trợ.
+                        </div>
+
+                        <!-- Product Meta -->
+                        <div class="product-meta border-top pt-4 mt-4">
+                            <div class="row g-3">
+                                <div class="col-6" th:if="${product.brand != null}">
+                                    <small class="text-muted d-block">Thương hiệu</small>
+                                    <strong th:text="${product.brand.name}">Brand</strong>
+                                </div>
+                                <div class="col-6" th:if="${product.category != null}">
+                                    <small class="text-muted d-block">Danh mục</small>
+                                    <strong th:text="${product.category.name}">Category</strong>
+                                </div>
+                                <div class="col-6" th:if="${product.importDate != null}">
+                                    <small class="text-muted d-block">Ngày nhập</small>
+                                    <strong
+                                        th:text="${#temporals.format(product.importDate, 'dd/MM/yyyy')}">01/01/2024</strong>
+                                </div>
+                                <div class="col-6" th:if="${product.expirationDate != null}">
+                                    <small class="text-muted d-block">Hạn sử dụng</small>
+                                    <strong
+                                        th:text="${#temporals.format(product.expirationDate, 'dd/MM/yyyy')}">01/01/2025</strong>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center text-success">
-                                    <i class="bi bi-shield-check me-2"></i>
-                                    <small>Đổi trả trong 30 ngày</small>
+                        </div>
+
+                        <!-- Benefits -->
+                        <div class="benefits mt-4">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center text-success">
+                                        <i class="bi bi-truck me-2"></i>
+                                        <small>Miễn phí vận chuyển đơn từ 500K</small>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center text-success">
-                                    <i class="bi bi-patch-check me-2"></i>
-                                    <small>Sản phẩm chính hãng 100%</small>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center text-success">
+                                        <i class="bi bi-shield-check me-2"></i>
+                                        <small>Đổi trả trong 30 ngày</small>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center text-success">
-                                    <i class="bi bi-headset me-2"></i>
-                                    <small>Hỗ trợ 24/7</small>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center text-success">
+                                        <i class="bi bi-patch-check me-2"></i>
+                                        <small>Sản phẩm chính hãng 100%</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center text-success">
+                                        <i class="bi bi-headset me-2"></i>
+                                        <small>Hỗ trợ 24/7</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Product Tabs -->
-        <div class="product-tabs mt-5">
-            <ul class="nav nav-tabs" id="productTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" 
+            <!-- Product Tabs -->
+            <div class="product-tabs mt-5">
+                <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
                             data-bs-target="#description" type="button" role="tab">
-                        <i class="bi bi-file-text me-1"></i>Mô tả chi tiết
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="specs-tab" data-bs-toggle="tab" 
-                            data-bs-target="#specs" type="button" role="tab">
-                        <i class="bi bi-list-check me-1"></i>Thông số kỹ thuật
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" 
-                            data-bs-target="#reviews" type="button" role="tab">
-                        <i class="bi bi-star me-1"></i>Đánh giá
-                    </button>
-                </li>
-            </ul>
-            <div class="tab-content p-4 bg-white border border-top-0 rounded-bottom" id="productTabsContent">
-                <!-- Description Tab -->
-                <div class="tab-pane fade show active" id="description" role="tabpanel">
-                    <div th:if="${product.description != null}">
-                        <p th:text="${product.description}">Mô tả chi tiết sản phẩm...</p>
-                    </div>
-                    <div th:if="${product.description == null}" class="text-muted">
-                        <p>Chưa có mô tả chi tiết cho sản phẩm này.</p>
-                    </div>
-                </div>
-                <!-- Specs Tab -->
-                <div class="tab-pane fade" id="specs" role="tabpanel">
-                    <table class="table table-striped">
-                        <tbody>
-                            <tr th:if="${product.brand != null}">
-                                <td class="fw-semibold" style="width: 200px;">Thương hiệu</td>
-                                <td th:text="${product.brand.name}">Brand</td>
-                            </tr>
-                            <tr th:if="${product.category != null}">
-                                <td class="fw-semibold">Danh mục</td>
-                                <td th:text="${product.category.name}">Category</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">Tình trạng kho</td>
-                                <td th:text="${product.stock > 0 ? 'Còn ' + product.stock + ' sản phẩm' : 'Hết hàng'}">Còn hàng</td>
-                            </tr>
-                            <tr th:if="${product.importDate != null}">
-                                <td class="fw-semibold">Ngày nhập kho</td>
-                                <td th:text="${#temporals.format(product.importDate, 'dd/MM/yyyy')}">01/01/2024</td>
-                            </tr>
-                            <tr th:if="${product.expirationDate != null}">
-                                <td class="fw-semibold">Hạn sử dụng</td>
-                                <td th:text="${#temporals.format(product.expirationDate, 'dd/MM/yyyy')}">01/01/2025</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Reviews Tab -->
-                <div class="tab-pane fade" id="reviews" role="tabpanel">
-                    <div class="row">
-                        <!-- Rating Summary -->
-                        <div class="col-md-4 mb-4">
-                            <div class="rating-summary text-center p-4 bg-light rounded">
-                                <div class="display-4 fw-bold text-warning" id="averageRating">0.0</div>
-                                <div class="rating-stars mb-2" id="averageStars">
-                                    <i class="bi bi-star text-warning"></i>
-                                    <i class="bi bi-star text-warning"></i>
-                                    <i class="bi bi-star text-warning"></i>
-                                    <i class="bi bi-star text-warning"></i>
-                                    <i class="bi bi-star text-warning"></i>
-                                </div>
-                                <small class="text-muted"><span id="totalReviews">0</span> đánh giá</small>
-                                
-                                <!-- Rating Distribution -->
-                                <div class="rating-distribution mt-4">
-                                    <div class="d-flex align-items-center mb-2" th:each="i : ${#numbers.sequence(5, 1, -1)}">
-                                        <span class="me-2" style="width: 20px;" th:text="${i}">5</span>
-                                        <i class="bi bi-star-fill text-warning me-2"></i>
-                                        <div class="progress flex-grow-1" style="height: 8px;">
-                                            <div class="progress-bar bg-warning" th:id="'rating-bar-' + ${i}" style="width: 0%"></div>
-                                        </div>
-                                        <span class="ms-2 text-muted small" style="width: 30px;" th:id="'rating-count-' + ${i}">0</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <i class="bi bi-file-text me-1"></i>Mô tả chi tiết
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs"
+                            type="button" role="tab">
+                            <i class="bi bi-list-check me-1"></i>Thông số kỹ thuật
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews"
+                            type="button" role="tab">
+                            <i class="bi bi-star me-1"></i>Đánh giá
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content p-4 bg-white border border-top-0 rounded-bottom" id="productTabsContent">
+                    <!-- Description Tab -->
+                    <div class="tab-pane fade show active" id="description" role="tabpanel">
+                        <div th:if="${product.description != null}">
+                            <p th:text="${product.description}">Mô tả chi tiết sản phẩm...</p>
                         </div>
-                        
-                        <!-- Review Form & List -->
-                        <div class="col-md-8">
-                            <!-- Write Review Form -->
-                            <div class="review-form card mb-4" id="reviewFormCard">
-                                <div class="card-header bg-white">
-                                    <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Viết đánh giá của bạn</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Đánh giá sao <span class="text-danger">*</span></label>
-                                        <div class="star-rating" id="starRating">
-                                            <i class="bi bi-star fs-4" data-rating="1"></i>
-                                            <i class="bi bi-star fs-4" data-rating="2"></i>
-                                            <i class="bi bi-star fs-4" data-rating="3"></i>
-                                            <i class="bi bi-star fs-4" data-rating="4"></i>
-                                            <i class="bi bi-star fs-4" data-rating="5"></i>
+                        <div th:if="${product.description == null}" class="text-muted">
+                            <p>Chưa có mô tả chi tiết cho sản phẩm này.</p>
+                        </div>
+                    </div>
+                    <!-- Specs Tab -->
+                    <div class="tab-pane fade" id="specs" role="tabpanel">
+                        <table class="table table-striped">
+                            <tbody>
+                                <tr th:if="${product.brand != null}">
+                                    <td class="fw-semibold" style="width: 200px;">Thương hiệu</td>
+                                    <td th:text="${product.brand.name}">Brand</td>
+                                </tr>
+                                <tr th:if="${product.category != null}">
+                                    <td class="fw-semibold">Danh mục</td>
+                                    <td th:text="${product.category.name}">Category</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Tình trạng kho</td>
+                                    <td
+                                        th:text="${product.stock > 0 ? 'Còn ' + product.stock + ' sản phẩm' : 'Hết hàng'}">
+                                        Còn hàng</td>
+                                </tr>
+                                <tr th:if="${product.importDate != null}">
+                                    <td class="fw-semibold">Ngày nhập kho</td>
+                                    <td th:text="${#temporals.format(product.importDate, 'dd/MM/yyyy')}">01/01/2024</td>
+                                </tr>
+                                <tr th:if="${product.expirationDate != null}">
+                                    <td class="fw-semibold">Hạn sử dụng</td>
+                                    <td th:text="${#temporals.format(product.expirationDate, 'dd/MM/yyyy')}">01/01/2025
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Reviews Tab -->
+                    <div class="tab-pane fade" id="reviews" role="tabpanel">
+                        <div class="row">
+                            <!-- Rating Summary -->
+                            <div class="col-md-4 mb-4">
+                                <div class="rating-summary text-center p-4 bg-light rounded">
+                                    <div class="display-4 fw-bold text-warning" id="averageRating">0.0</div>
+                                    <div class="rating-stars mb-2" id="averageStars">
+                                        <i class="bi bi-star text-warning"></i>
+                                        <i class="bi bi-star text-warning"></i>
+                                        <i class="bi bi-star text-warning"></i>
+                                        <i class="bi bi-star text-warning"></i>
+                                        <i class="bi bi-star text-warning"></i>
+                                    </div>
+                                    <small class="text-muted"><span id="totalReviews">0</span> đánh giá</small>
+
+                                    <!-- Rating Distribution -->
+                                    <div class="rating-distribution mt-4">
+                                        <div class="d-flex align-items-center mb-2"
+                                            th:each="i : ${#numbers.sequence(5, 1, -1)}">
+                                            <span class="me-2" style="width: 20px;" th:text="${i}">5</span>
+                                            <i class="bi bi-star-fill text-warning me-2"></i>
+                                            <div class="progress flex-grow-1" style="height: 8px;">
+                                                <div class="progress-bar bg-warning" th:id="'rating-bar-' + ${i}"
+                                                    style="width: 0%"></div>
+                                            </div>
+                                            <span class="ms-2 text-muted small" style="width: 30px;"
+                                                th:id="'rating-count-' + ${i}">0</span>
                                         </div>
-                                        <input type="hidden" id="selectedRating" value="0">
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Nhận xét</label>
-                                        <textarea class="form-control" id="reviewComment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
-                                    </div>
-                                    <button type="button" class="btn btn-primary" id="submitReview">
-                                        <i class="bi bi-send me-2"></i>Gửi đánh giá
-                                    </button>
                                 </div>
                             </div>
-                            
-                            <!-- Already Reviewed Message -->
-                            <div class="alert alert-info d-none" id="alreadyReviewedMsg">
-                                <i class="bi bi-info-circle me-2"></i>Bạn đã đánh giá sản phẩm này rồi.
-                            </div>
-                            
-                            <!-- Login Prompt -->
-                            <div class="alert alert-warning d-none" id="loginPrompt">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                <a href="/login" class="alert-link">Đăng nhập</a> để viết đánh giá.
-                            </div>
-                            
-                            <!-- Reviews List -->
-                            <div id="reviewsList">
-                                <div class="text-center py-4 text-muted" id="noReviews">
-                                    <i class="bi bi-chat-square-text display-4 mb-3 d-block"></i>
-                                    <p>Chưa có đánh giá nào cho sản phẩm này.</p>
-                                    <p class="small">Hãy là người đầu tiên đánh giá!</p>
+
+                            <!-- Review Form & List -->
+                            <div class="col-md-8">
+                                <!-- Write Review Form -->
+                                <div class="review-form card mb-4" id="reviewFormCard">
+                                    <div class="card-header bg-white">
+                                        <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Viết đánh giá của bạn
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Đánh giá sao <span
+                                                    class="text-danger">*</span></label>
+                                            <div class="star-rating" id="starRating">
+                                                <i class="bi bi-star fs-4" data-rating="1"></i>
+                                                <i class="bi bi-star fs-4" data-rating="2"></i>
+                                                <i class="bi bi-star fs-4" data-rating="3"></i>
+                                                <i class="bi bi-star fs-4" data-rating="4"></i>
+                                                <i class="bi bi-star fs-4" data-rating="5"></i>
+                                            </div>
+                                            <input type="hidden" id="selectedRating" value="0">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Nhận xét</label>
+                                            <textarea class="form-control" id="reviewComment" rows="3"
+                                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" id="submitReview">
+                                            <i class="bi bi-send me-2"></i>Gửi đánh giá
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Already Reviewed Message -->
+                                <div class="alert alert-info d-none" id="alreadyReviewedMsg">
+                                    <i class="bi bi-info-circle me-2"></i>Bạn đã đánh giá sản phẩm này rồi.
+                                </div>
+
+                                <!-- Login Prompt -->
+                                <div class="alert alert-warning d-none" id="loginPrompt">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <a href="/login" class="alert-link">Đăng nhập</a> để viết đánh giá.
+                                </div>
+
+                                <!-- Reviews List -->
+                                <div id="reviewsList">
+                                    <div class="text-center py-4 text-muted" id="noReviews">
+                                        <i class="bi bi-chat-square-text display-4 mb-3 d-block"></i>
+                                        <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+                                        <p class="small">Hãy là người đầu tiên đánh giá!</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -456,306 +497,347 @@
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Related Products Section -->
-<section class="py-5 bg-light" th:if="${relatedProducts != null && !relatedProducts.empty}">
-    <div class="container">
-        <h3 class="fw-bold mb-4">
-            <i class="bi bi-grid me-2"></i>Sản phẩm liên quan
-        </h3>
-        <div class="row g-4">
-            <div class="col-6 col-md-4 col-lg-3" th:each="rProduct : ${relatedProducts}">
-                <div class="card product-card h-100 shadow-sm">
-                    <a th:href="@{/product/{id}(id=${rProduct.id})}" class="text-decoration-none">
-                        <img th:src="${rProduct.imageUrl != null ? rProduct.imageUrl : '/images/no-image.svg'}"
-                             class="card-img-top product-image"
-                             th:alt="${rProduct.name}"
-                             onerror="this.src='/images/no-image.svg'">
-                    </a>
-                    <div class="card-body d-flex flex-column">
-                        <a th:href="@{/product/{id}(id=${rProduct.id})}" class="text-decoration-none text-dark">
-                            <h6 class="card-title text-truncate" th:text="${rProduct.name}">Tên sản phẩm</h6>
+    <!-- Related Products Section -->
+    <section class="py-5 bg-light" th:if="${relatedProducts != null && !relatedProducts.empty}">
+        <div class="container">
+            <h3 class="fw-bold mb-4">
+                <i class="bi bi-grid me-2"></i>Sản phẩm liên quan
+            </h3>
+            <div class="row g-4">
+                <div class="col-6 col-md-4 col-lg-3" th:each="rProduct : ${relatedProducts}">
+                    <div class="card product-card h-100 shadow-sm">
+                        <a th:href="@{/product/{id}(id=${rProduct.id})}" class="text-decoration-none">
+                            <img th:src="${rProduct.imageUrl != null ? rProduct.imageUrl : '/images/no-image.svg'}"
+                                class="card-img-top product-image" th:alt="${rProduct.name}"
+                                onerror="this.src='/images/no-image.svg'">
                         </a>
-                        <div class="mt-auto">
-                            <span class="text-danger fw-bold" 
-                                  th:text="${#numbers.formatDecimal(rProduct.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000 ₫</span>
-                            <button class="btn btn-sm btn-outline-primary w-100 mt-2 btn-add-cart"
+                        <div class="card-body d-flex flex-column">
+                            <a th:href="@{/product/{id}(id=${rProduct.id})}" class="text-decoration-none text-dark">
+                                <h6 class="card-title text-truncate" th:text="${rProduct.name}">Tên sản phẩm</h6>
+                            </a>
+                            <div class="mt-auto">
+                                <span class="text-danger fw-bold"
+                                    th:text="${#numbers.formatDecimal(rProduct.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100,000
+                                    ₫</span>
+                                <button class="btn btn-sm btn-outline-primary w-100 mt-2 btn-add-cart"
                                     th:data-product-id="${rProduct.id}">
-                                <i class="bi bi-cart-plus me-1"></i>Thêm
-                            </button>
+                                    <i class="bi bi-cart-plus me-1"></i>Thêm
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Footer -->
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-<!-- Product Detail Scripts -->
-<script th:inline="javascript">
-document.addEventListener('DOMContentLoaded', function() {
-    const quantityInput = document.getElementById('quantity');
-    const decreaseBtn = document.getElementById('decreaseQty');
-    const increaseBtn = document.getElementById('increaseQty');
-    const btnAddToCart = document.getElementById('btnAddToCart');
-    const btnWishlist = document.getElementById('btnWishlist');
-    const maxStock = /*[[${product.stock}]]*/ 10;
-    const productId = /*[[${product.id}]]*/ 0;
-    const isLoggedIn = /*[[${#authentication != null && #authentication.name != 'anonymousUser'}]]*/ false;
+    <!-- Product Detail Scripts -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const quantityInput = document.getElementById('quantity');
+            const decreaseBtn = document.getElementById('decreaseQty');
+            const increaseBtn = document.getElementById('increaseQty');
+            const btnAddToCart = document.getElementById('btnAddToCart');
+            const btnWishlist = document.getElementById('btnWishlist');
+            const maxStock = /*[[${product.stock}]]*/ 10;
+            const productId = /*[[${product.id}]]*/ 0;
+            const isLoggedIn = /*[[${#authentication != null && #authentication.name != 'anonymousUser'}]]*/ false;
 
-    // Fallback showToast function if main.js not loaded yet
-    function localShowToast(message, type) {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container';
-            container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
-            document.body.appendChild(container);
-        }
-        
-        const icons = {
-            success: '<i class="bi bi-check-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
-            error: '<i class="bi bi-x-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
-            info: '<i class="bi bi-info-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
-            warning: '<i class="bi bi-exclamation-triangle-fill" style="font-size:1.25rem;margin-right:12px;"></i>'
-        };
-        
-        const colors = {
-            success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-            info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-        };
-        
-        const toast = document.createElement('div');
-        toast.style.cssText = `display:flex;align-items:center;padding:14px 20px;border-radius:12px;background:${colors[type] || colors.info};color:white;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:280px;max-width:400px;animation:slideInRight 0.4s ease-out;`;
-        toast.innerHTML = `${icons[type] || icons.info}<span style="flex:1;">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:1.25rem;padding:0;margin-left:12px;"><i class="bi bi-x"></i></button>`;
-        
-        if (!document.getElementById('toast-animation-style')) {
-            const style = document.createElement('style');
-            style.id = 'toast-animation-style';
-            style.textContent = '@keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}';
-            document.head.appendChild(style);
-        }
-        
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    // Decrease quantity
-    if (decreaseBtn) {
-        decreaseBtn.addEventListener('click', function() {
-            let value = parseInt(quantityInput.value) || 1;
-            if (value > 1) quantityInput.value = value - 1;
-        });
-    }
-
-    // Increase quantity
-    if (increaseBtn) {
-        increaseBtn.addEventListener('click', function() {
-            let value = parseInt(quantityInput.value) || 1;
-            if (value < maxStock) quantityInput.value = value + 1;
-        });
-    }
-
-    // Validate quantity input
-    if (quantityInput) {
-        quantityInput.addEventListener('change', function() {
-            let value = parseInt(this.value) || 1;
-            if (value < 1) value = 1;
-            if (value > maxStock) value = maxStock;
-            this.value = value;
-        });
-    }
-
-    // Add to cart with quantity
-    if (btnAddToCart) {
-        btnAddToCart.addEventListener('click', function() {
-            const pId = this.dataset.productId;
-            const quantity = parseInt(quantityInput.value) || 1;
-            
-            fetch('/cart/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `productId=${pId}&quantity=${quantity}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    localShowToast('Đã thêm ' + quantity + ' sản phẩm vào giỏ hàng!', 'success');
-                    const badge = document.querySelector('.cart-badge');
-                    if (badge && data.cartCount !== undefined) {
-                        badge.textContent = data.cartCount;
-                        badge.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
-                    }
-                } else if (data.error && data.error.includes('đăng nhập')) {
-                    localShowToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'error');
-                    setTimeout(() => window.location.href = '/login', 1500);
-                } else {
-                    localShowToast(data.error || 'Không thể thêm vào giỏ hàng', 'error');
+            // Fallback showToast function if main.js not loaded yet
+            function localShowToast(message, type) {
+                let container = document.querySelector('.toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.className = 'toast-container';
+                    container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
+                    document.body.appendChild(container);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                localShowToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
-            });
-        });
-    }
 
-    // Wishlist toggle
-    if (btnWishlist) {
-        btnWishlist.addEventListener('click', function() {
-            const icon = this.querySelector('i');
-            if (icon.classList.contains('bi-heart')) {
-                icon.classList.remove('bi-heart');
-                icon.classList.add('bi-heart-fill');
-                this.classList.remove('btn-outline-danger');
-                this.classList.add('btn-danger');
-                localShowToast('Đã thêm vào danh sách yêu thích!', 'success');
-            } else {
-                icon.classList.remove('bi-heart-fill');
-                icon.classList.add('bi-heart');
-                this.classList.remove('btn-danger');
-                this.classList.add('btn-outline-danger');
-                localShowToast('Đã xóa khỏi danh sách yêu thích!', 'info');
+                const icons = {
+                    success: '<i class="bi bi-check-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
+                    error: '<i class="bi bi-x-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
+                    info: '<i class="bi bi-info-circle-fill" style="font-size:1.25rem;margin-right:12px;"></i>',
+                    warning: '<i class="bi bi-exclamation-triangle-fill" style="font-size:1.25rem;margin-right:12px;"></i>'
+                };
+
+                const colors = {
+                    success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                };
+
+                const toast = document.createElement('div');
+                toast.style.cssText = `display:flex;align-items:center;padding:14px 20px;border-radius:12px;background:${colors[type] || colors.info};color:white;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:280px;max-width:400px;animation:slideInRight 0.4s ease-out;`;
+                toast.innerHTML = `${icons[type] || icons.info}<span style="flex:1;">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:1.25rem;padding:0;margin-left:12px;"><i class="bi bi-x"></i></button>`;
+
+                if (!document.getElementById('toast-animation-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'toast-animation-style';
+                    style.textContent = '@keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}';
+                    document.head.appendChild(style);
+                }
+
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
             }
-        });
-    }
 
-    // Thumbnail click handler
-    const thumbnails = document.querySelectorAll('.thumbnail img');
-    thumbnails.forEach(thumb => {
-        thumb.addEventListener('click', function() {
-            const fullUrl = this.dataset.fullUrl || this.src;
-            document.getElementById('mainImage').src = fullUrl;
-            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-            this.parentElement.classList.add('active');
-        });
-    });
+            // Decrease quantity
+            if (decreaseBtn) {
+                decreaseBtn.addEventListener('click', function () {
+                    let value = parseInt(quantityInput.value) || 1;
+                    if (value > 1) quantityInput.value = value - 1;
+                });
+            }
 
-    // ==================== REVIEW FUNCTIONALITY ====================
-    
-    // Star rating interaction
-    const starRating = document.getElementById('starRating');
-    const selectedRatingInput = document.getElementById('selectedRating');
-    
-    if (starRating) {
-        const stars = starRating.querySelectorAll('i');
-        
-        stars.forEach(star => {
-            star.addEventListener('mouseenter', function() {
-                const rating = parseInt(this.dataset.rating);
-                stars.forEach((s, index) => {
-                    if (index < rating) {
-                        s.classList.add('hovered');
-                        s.classList.remove('bi-star');
-                        s.classList.add('bi-star-fill');
+            // Increase quantity
+            if (increaseBtn) {
+                increaseBtn.addEventListener('click', function () {
+                    let value = parseInt(quantityInput.value) || 1;
+                    if (value < maxStock) quantityInput.value = value + 1;
+                });
+            }
+
+            // Validate quantity input
+            if (quantityInput) {
+                quantityInput.addEventListener('change', function () {
+                    let value = parseInt(this.value) || 1;
+                    if (value < 1) value = 1;
+                    if (value > maxStock) value = maxStock;
+                    this.value = value;
+                });
+            }
+
+            // Add to cart with quantity
+            if (btnAddToCart) {
+                btnAddToCart.addEventListener('click', function () {
+                    const pId = this.dataset.productId;
+                    const quantity = parseInt(quantityInput.value) || 1;
+
+                    fetch('/cart/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `productId=${pId}&quantity=${quantity}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                localShowToast('Đã thêm ' + quantity + ' sản phẩm vào giỏ hàng!', 'success');
+                                const badge = document.querySelector('.cart-badge');
+                                if (badge && data.cartCount !== undefined) {
+                                    badge.textContent = data.cartCount;
+                                    badge.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                                }
+                            } else if (data.error && data.error.includes('đăng nhập')) {
+                                localShowToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'error');
+                                setTimeout(() => window.location.href = '/login', 1500);
+                            } else {
+                                localShowToast(data.error || 'Không thể thêm vào giỏ hàng', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            localShowToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+                        });
+                });
+            }
+
+            // Buy now - Add to cart and redirect to checkout
+            const btnBuyNow = document.getElementById('btnBuyNow');
+            if (btnBuyNow) {
+                btnBuyNow.addEventListener('click', function () {
+                    const pId = this.dataset.productId;
+                    const quantity = parseInt(quantityInput.value) || 1;
+
+                    // Show loading state
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+                    this.disabled = true;
+
+                    fetch('/cart/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `productId=${pId}&quantity=${quantity}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Redirect to checkout page
+                                window.location.href = '/checkout';
+                            } else if (data.error && data.error.includes('đăng nhập')) {
+                                localShowToast('Vui lòng đăng nhập để mua hàng', 'error');
+                                setTimeout(() => window.location.href = '/login', 1500);
+                                this.innerHTML = originalText;
+                                this.disabled = false;
+                            } else {
+                                localShowToast(data.error || 'Không thể mua hàng', 'error');
+                                this.innerHTML = originalText;
+                                this.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            localShowToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        });
+                });
+            }
+
+            // Wishlist toggle
+            if (btnWishlist) {
+                btnWishlist.addEventListener('click', function () {
+                    const icon = this.querySelector('i');
+                    if (icon.classList.contains('bi-heart')) {
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                        this.classList.remove('btn-outline-danger');
+                        this.classList.add('btn-danger');
+                        localShowToast('Đã thêm vào danh sách yêu thích!', 'success');
                     } else {
-                        s.classList.remove('hovered');
-                        s.classList.remove('bi-star-fill');
-                        s.classList.add('bi-star');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                        this.classList.remove('btn-danger');
+                        this.classList.add('btn-outline-danger');
+                        localShowToast('Đã xóa khỏi danh sách yêu thích!', 'info');
                     }
                 });
-            });
-            
-            star.addEventListener('click', function() {
-                const rating = parseInt(this.dataset.rating);
-                selectedRatingInput.value = rating;
-                stars.forEach((s, index) => {
-                    if (index < rating) {
-                        s.classList.add('selected');
-                        s.classList.remove('bi-star');
-                        s.classList.add('bi-star-fill');
-                    } else {
-                        s.classList.remove('selected');
-                        s.classList.remove('bi-star-fill');
-                        s.classList.add('bi-star');
-                    }
+            }
+
+            // Thumbnail click handler
+            const thumbnails = document.querySelectorAll('.thumbnail img');
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', function () {
+                    const fullUrl = this.dataset.fullUrl || this.src;
+                    document.getElementById('mainImage').src = fullUrl;
+                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+                    this.parentElement.classList.add('active');
                 });
             });
-        });
-        
-        starRating.addEventListener('mouseleave', function() {
-            const selectedRating = parseInt(selectedRatingInput.value) || 0;
-            stars.forEach((s, index) => {
-                s.classList.remove('hovered');
-                if (index < selectedRating) {
-                    s.classList.add('bi-star-fill');
-                    s.classList.remove('bi-star');
-                } else {
-                    s.classList.remove('bi-star-fill');
-                    s.classList.add('bi-star');
-                }
-            });
-        });
-    }
-    
-    // Load reviews and rating
-    function loadReviews() {
-        // Load rating summary
-        fetch(`/api/reviews/product/${productId}/rating`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('averageRating').textContent = data.averageRating.toFixed(1);
-                document.getElementById('totalReviews').textContent = data.totalReviews;
-                
-                // Update average stars
-                const avgStars = document.getElementById('averageStars');
-                avgStars.innerHTML = '';
-                for (let i = 1; i <= 5; i++) {
-                    if (i <= Math.floor(data.averageRating)) {
-                        avgStars.innerHTML += '<i class="bi bi-star-fill text-warning"></i>';
-                    } else if (i - 0.5 <= data.averageRating) {
-                        avgStars.innerHTML += '<i class="bi bi-star-half text-warning"></i>';
-                    } else {
-                        avgStars.innerHTML += '<i class="bi bi-star text-warning"></i>';
-                    }
-                }
-                
-                // Update distribution bars
-                const total = data.totalReviews || 1;
-                for (let i = 1; i <= 5; i++) {
-                    const count = data.ratingDistribution[i] || 0;
-                    const percent = (count / total) * 100;
-                    const bar = document.getElementById(`rating-bar-${i}`);
-                    const countEl = document.getElementById(`rating-count-${i}`);
-                    if (bar) bar.style.width = `${percent}%`;
-                    if (countEl) countEl.textContent = count;
-                }
-            });
-        
-        // Load reviews list
-        fetch(`/api/reviews/product/${productId}`)
-            .then(res => res.json())
-            .then(reviews => {
-                const reviewsList = document.getElementById('reviewsList');
-                const noReviews = document.getElementById('noReviews');
-                
-                if (reviews.length === 0) {
-                    noReviews.classList.remove('d-none');
-                    return;
-                }
-                
-                noReviews.classList.add('d-none');
-                
-                let html = '';
-                reviews.forEach(review => {
-                    const stars = Array(5).fill(0).map((_, i) => 
-                        i < review.rating ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>'
-                    ).join('');
-                    
-                    const date = new Date(review.createdAt).toLocaleDateString('vi-VN', {
-                        day: '2-digit', month: '2-digit', year: 'numeric'
+
+            // ==================== REVIEW FUNCTIONALITY ====================
+
+            // Star rating interaction
+            const starRating = document.getElementById('starRating');
+            const selectedRatingInput = document.getElementById('selectedRating');
+
+            if (starRating) {
+                const stars = starRating.querySelectorAll('i');
+
+                stars.forEach(star => {
+                    star.addEventListener('mouseenter', function () {
+                        const rating = parseInt(this.dataset.rating);
+                        stars.forEach((s, index) => {
+                            if (index < rating) {
+                                s.classList.add('hovered');
+                                s.classList.remove('bi-star');
+                                s.classList.add('bi-star-fill');
+                            } else {
+                                s.classList.remove('hovered');
+                                s.classList.remove('bi-star-fill');
+                                s.classList.add('bi-star');
+                            }
+                        });
                     });
-                    
-                    const avatar = review.userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userName)}&background=random`;
-                    
-                    html += `
+
+                    star.addEventListener('click', function () {
+                        const rating = parseInt(this.dataset.rating);
+                        selectedRatingInput.value = rating;
+                        stars.forEach((s, index) => {
+                            if (index < rating) {
+                                s.classList.add('selected');
+                                s.classList.remove('bi-star');
+                                s.classList.add('bi-star-fill');
+                            } else {
+                                s.classList.remove('selected');
+                                s.classList.remove('bi-star-fill');
+                                s.classList.add('bi-star');
+                            }
+                        });
+                    });
+                });
+
+                starRating.addEventListener('mouseleave', function () {
+                    const selectedRating = parseInt(selectedRatingInput.value) || 0;
+                    stars.forEach((s, index) => {
+                        s.classList.remove('hovered');
+                        if (index < selectedRating) {
+                            s.classList.add('bi-star-fill');
+                            s.classList.remove('bi-star');
+                        } else {
+                            s.classList.remove('bi-star-fill');
+                            s.classList.add('bi-star');
+                        }
+                    });
+                });
+            }
+
+            // Load reviews and rating
+            function loadReviews() {
+                // Load rating summary
+                fetch(`/api/reviews/product/${productId}/rating`)
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById('averageRating').textContent = data.averageRating.toFixed(1);
+                        document.getElementById('totalReviews').textContent = data.totalReviews;
+
+                        // Update average stars
+                        const avgStars = document.getElementById('averageStars');
+                        avgStars.innerHTML = '';
+                        for (let i = 1; i <= 5; i++) {
+                            if (i <= Math.floor(data.averageRating)) {
+                                avgStars.innerHTML += '<i class="bi bi-star-fill text-warning"></i>';
+                            } else if (i - 0.5 <= data.averageRating) {
+                                avgStars.innerHTML += '<i class="bi bi-star-half text-warning"></i>';
+                            } else {
+                                avgStars.innerHTML += '<i class="bi bi-star text-warning"></i>';
+                            }
+                        }
+
+                        // Update distribution bars
+                        const total = data.totalReviews || 1;
+                        for (let i = 1; i <= 5; i++) {
+                            const count = data.ratingDistribution[i] || 0;
+                            const percent = (count / total) * 100;
+                            const bar = document.getElementById(`rating-bar-${i}`);
+                            const countEl = document.getElementById(`rating-count-${i}`);
+                            if (bar) bar.style.width = `${percent}%`;
+                            if (countEl) countEl.textContent = count;
+                        }
+                    });
+
+                // Load reviews list
+                fetch(`/api/reviews/product/${productId}`)
+                    .then(res => res.json())
+                    .then(reviews => {
+                        const reviewsList = document.getElementById('reviewsList');
+                        const noReviews = document.getElementById('noReviews');
+
+                        if (reviews.length === 0) {
+                            noReviews.classList.remove('d-none');
+                            return;
+                        }
+
+                        noReviews.classList.add('d-none');
+
+                        let html = '';
+                        reviews.forEach(review => {
+                            const stars = Array(5).fill(0).map((_, i) =>
+                                i < review.rating ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>'
+                            ).join('');
+
+                            const date = new Date(review.createdAt).toLocaleDateString('vi-VN', {
+                                day: '2-digit', month: '2-digit', year: 'numeric'
+                            });
+
+                            const avatar = review.userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userName)}&background=random`;
+
+                            html += `
                         <div class="review-card" data-review-id="${review.id}">
                             <div class="review-header">
                                 <img src="${avatar}" class="review-avatar" alt="${review.userName}" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'">
@@ -778,92 +860,93 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="review-comment">${review.comment || '<em class="text-muted">Không có nhận xét</em>'}</div>
                         </div>
                     `;
-                });
-                
-                reviewsList.innerHTML = html;
-            });
-    }
-    
-    // Check if user can review
-    function checkCanReview() {
-        if (!isLoggedIn) {
-            document.getElementById('reviewFormCard').classList.add('d-none');
-            document.getElementById('loginPrompt').classList.remove('d-none');
-            return;
-        }
-        
-        fetch(`/api/reviews/product/${productId}/has-reviewed`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.hasReviewed) {
-                    document.getElementById('reviewFormCard').classList.add('d-none');
-                    document.getElementById('alreadyReviewedMsg').classList.remove('d-none');
-                }
-            });
-    }
-    
-    // Submit review
-    const submitReviewBtn = document.getElementById('submitReview');
-    if (submitReviewBtn) {
-        submitReviewBtn.addEventListener('click', function() {
-            const rating = parseInt(selectedRatingInput.value);
-            const comment = document.getElementById('reviewComment').value.trim();
-            
-            if (rating < 1 || rating > 5) {
-                localShowToast('Vui lòng chọn số sao đánh giá', 'warning');
-                return;
+                        });
+
+                        reviewsList.innerHTML = html;
+                    });
             }
-            
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
-            
-            fetch('/api/reviews', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId, rating, comment })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    localShowToast('Đánh giá thành công!', 'success');
+
+            // Check if user can review
+            function checkCanReview() {
+                if (!isLoggedIn) {
                     document.getElementById('reviewFormCard').classList.add('d-none');
-                    document.getElementById('alreadyReviewedMsg').classList.remove('d-none');
-                    loadReviews();
-                } else {
-                    localShowToast(data.error || 'Có lỗi xảy ra', 'error');
+                    document.getElementById('loginPrompt').classList.remove('d-none');
+                    return;
                 }
-            })
-            .catch(() => localShowToast('Có lỗi xảy ra', 'error'))
-            .finally(() => {
-                this.disabled = false;
-                this.innerHTML = '<i class="bi bi-send me-2"></i>Gửi đánh giá';
-            });
+
+                fetch(`/api/reviews/product/${productId}/has-reviewed`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.hasReviewed) {
+                            document.getElementById('reviewFormCard').classList.add('d-none');
+                            document.getElementById('alreadyReviewedMsg').classList.remove('d-none');
+                        }
+                    });
+            }
+
+            // Submit review
+            const submitReviewBtn = document.getElementById('submitReview');
+            if (submitReviewBtn) {
+                submitReviewBtn.addEventListener('click', function () {
+                    const rating = parseInt(selectedRatingInput.value);
+                    const comment = document.getElementById('reviewComment').value.trim();
+
+                    if (rating < 1 || rating > 5) {
+                        localShowToast('Vui lòng chọn số sao đánh giá', 'warning');
+                        return;
+                    }
+
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+                    fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId, rating, comment })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                localShowToast('Đánh giá thành công!', 'success');
+                                document.getElementById('reviewFormCard').classList.add('d-none');
+                                document.getElementById('alreadyReviewedMsg').classList.remove('d-none');
+                                loadReviews();
+                            } else {
+                                localShowToast(data.error || 'Có lỗi xảy ra', 'error');
+                            }
+                        })
+                        .catch(() => localShowToast('Có lỗi xảy ra', 'error'))
+                        .finally(() => {
+                            this.disabled = false;
+                            this.innerHTML = '<i class="bi bi-send me-2"></i>Gửi đánh giá';
+                        });
+                });
+            }
+
+            // Delete review function
+            window.deleteReview = function (reviewId) {
+                if (!confirm('Bạn có chắc muốn xóa đánh giá này?')) return;
+
+                fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            localShowToast('Đã xóa đánh giá', 'success');
+                            document.getElementById('reviewFormCard').classList.remove('d-none');
+                            document.getElementById('alreadyReviewedMsg').classList.add('d-none');
+                            loadReviews();
+                        } else {
+                            localShowToast(data.error || 'Có lỗi xảy ra', 'error');
+                        }
+                    });
+            };
+
+            // Initial load
+            loadReviews();
+            checkCanReview();
         });
-    }
-    
-    // Delete review function
-    window.deleteReview = function(reviewId) {
-        if (!confirm('Bạn có chắc muốn xóa đánh giá này?')) return;
-        
-        fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    localShowToast('Đã xóa đánh giá', 'success');
-                    document.getElementById('reviewFormCard').classList.remove('d-none');
-                    document.getElementById('alreadyReviewedMsg').classList.add('d-none');
-                    loadReviews();
-                } else {
-                    localShowToast(data.error || 'Có lỗi xảy ra', 'error');
-                }
-            });
-    };
-    
-    // Initial load
-    loadReviews();
-    checkCanReview();
-});
-</script>
+    </script>
 
 </body>
+
 </html>

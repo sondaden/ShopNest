@@ -16,7 +16,8 @@ public class Order {
     // getters & setters (hoặc dùng Lombok @Getter @Setter)
     @Setter
     @Getter
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Setter
@@ -74,7 +75,7 @@ public class Order {
 
     @Getter
     private LocalDateTime createdAt;
-    
+
     @Getter
     private LocalDateTime updatedAt;
 
@@ -83,8 +84,15 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
-    @PrePersist protected void onCreate() { createdAt = updatedAt = LocalDateTime.now(); }
-    @PreUpdate protected void onUpdate() { updatedAt = LocalDateTime.now(); }
+    @PrePersist
+    protected void onCreate() {
+        createdAt = updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     // Helper methods for templates
     public String getCode() {
@@ -114,7 +122,6 @@ public class Order {
             case COD -> "Thanh toán khi nhận hàng";
             case BANK_TRANSFER -> "Chuyển khoản";
             case MOMO -> "Ví MoMo";
-            case VNPAY -> "VNPay";
         };
     }
 

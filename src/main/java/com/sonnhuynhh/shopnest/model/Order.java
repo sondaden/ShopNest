@@ -100,6 +100,8 @@ public class Order {
     }
 
     public String getStatusLabel() {
+        if (status == null)
+            return "Không xác định";
         return switch (status) {
             case PENDING -> "Chờ xử lý";
             case CONFIRMED -> "Đã xác nhận";
@@ -110,6 +112,8 @@ public class Order {
     }
 
     public String getPaymentStatusLabel() {
+        if (paymentStatus == null)
+            return "Không xác định";
         return switch (paymentStatus) {
             case UNPAID -> "Chưa thanh toán";
             case PAID -> "Đã thanh toán";
@@ -118,10 +122,13 @@ public class Order {
     }
 
     public String getPaymentMethodLabel() {
+        if (paymentMethod == null)
+            return "Không xác định";
         return switch (paymentMethod) {
             case COD -> "Thanh toán khi nhận hàng";
-            case BANK_TRANSFER -> "Chuyển khoản";
+            case BANK_TRANSFER, BANKING -> "Chuyển khoản";
             case MOMO -> "Ví MoMo";
+            case VNPAY -> "VNPay";
         };
     }
 

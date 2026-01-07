@@ -22,7 +22,7 @@ public class ChatService {
     @Value("${gemini.api.key:}")
     private String apiKey;
 
-    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -54,7 +54,13 @@ public class ChatService {
             Nếu khách hỏi về sản phẩm không có trong danh sách, hãy thông báo hiện chưa có và đề xuất sản phẩm tương tự nếu có.
             """;
 
+    private static final int MAX_RETRIES = 3;
+
     public String chat(String userMessage) {
+        return chatWithRetry(userMessage, 0);
+    }
+
+    private String chatWithRetry(String userMessage, int retryCount) {
         try {
             // Check API key
             if (apiKey == null || apiKey.isEmpty()) {
@@ -95,7 +101,7 @@ public class ChatService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            logger.info("Sending request to Gemini API...");
+            logger.info("Sending request to Gemini API (attempt {})...", retryCount + 1);
             @SuppressWarnings("unchecked")
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity,
                     (Class<Map<String, Object>>) (Class<?>) Map.class);
@@ -108,10 +114,22 @@ public class ChatService {
 
         } catch (HttpClientErrorException e) {
             logger.error("Gemini API Error - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED || e.getStatusCode() == HttpStatus.FORBIDDEN) {
+
+            if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                if (retryCount < MAX_RETRIES) {
+                    // Wait and retry with exponential backoff
+                    int waitSeconds = (int) Math.pow(2, retryCount + 1); // 2, 4, 8 seconds
+                    logger.info("Rate limited, waiting {}s before retry...", waitSeconds);
+                    try {
+                        Thread.sleep(waitSeconds * 1000L);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return chatWithRetry(userMessage, retryCount + 1);
+                }
+                return "Hệ thống đang bận. Vui lòng đợi 30 giây rồi thử lại.";
+            } else if (e.getStatusCode() == HttpStatus.UNAUTHORIZED || e.getStatusCode() == HttpStatus.FORBIDDEN) {
                 return "API key không hợp lệ. Vui lòng liên hệ admin.";
-            } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                return "Hệ thống đang bận. Vui lòng thử lại sau ít phút.";
             }
             return "Xin lỗi, đã xảy ra lỗi khi kết nối với AI.";
         } catch (Exception e) {

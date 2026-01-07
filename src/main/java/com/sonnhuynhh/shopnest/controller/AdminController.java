@@ -292,36 +292,50 @@ public class AdminController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             Model model) {
+        try {
+            Page<Order> orderPage;
+            PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Order> orderPage;
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            if (status != null && !status.isEmpty()) {
+                orderPage = orderRepository.findByStatus(OrderStatus.valueOf(status), pageRequest);
+            } else {
+                orderPage = orderRepository.findAll(pageRequest);
+            }
 
-        if (status != null && !status.isEmpty()) {
-            orderPage = orderRepository.findByStatus(OrderStatus.valueOf(status), pageRequest);
-        } else {
-            orderPage = orderRepository.findAll(pageRequest);
+            // Order status counts
+            long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
+            long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
+            long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
+            long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
+            long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
+
+            model.addAttribute("orders", orderPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", orderPage.getTotalPages());
+            model.addAttribute("totalItems", orderPage.getTotalElements());
+            model.addAttribute("status", status);
+            model.addAttribute("statuses", OrderStatus.values());
+            model.addAttribute("pendingCount", pendingCount);
+            model.addAttribute("confirmedCount", confirmedCount);
+            model.addAttribute("shippingCount", shippingCount);
+            model.addAttribute("deliveredCount", deliveredCount);
+            model.addAttribute("cancelledCount", cancelledCount);
+        } catch (Exception e) {
+            // Fallback data if there's an error
+            model.addAttribute("orders", java.util.Collections.emptyList());
+            model.addAttribute("currentPage", 0);
+            model.addAttribute("totalPages", 0);
+            model.addAttribute("totalItems", 0L);
+            model.addAttribute("status", null);
+            model.addAttribute("statuses", OrderStatus.values());
+            model.addAttribute("pendingCount", 0L);
+            model.addAttribute("confirmedCount", 0L);
+            model.addAttribute("shippingCount", 0L);
+            model.addAttribute("deliveredCount", 0L);
+            model.addAttribute("cancelledCount", 0L);
+            model.addAttribute("error", "Lỗi tải dữ liệu: " + e.getMessage());
         }
-
-        // Order status counts
-        long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
-        long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
-        long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
-        long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
-        long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
-
-        model.addAttribute("orders", orderPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", orderPage.getTotalPages());
-        model.addAttribute("totalItems", orderPage.getTotalElements());
-        model.addAttribute("status", status);
-        model.addAttribute("statuses", OrderStatus.values());
-        model.addAttribute("pendingCount", pendingCount);
-        model.addAttribute("confirmedCount", confirmedCount);
-        model.addAttribute("shippingCount", shippingCount);
-        model.addAttribute("deliveredCount", deliveredCount);
-        model.addAttribute("cancelledCount", cancelledCount);
         model.addAttribute("activePage", "orders");
-
         return "admin/orders";
     }
 
@@ -431,61 +445,81 @@ public class AdminController {
     // ==================== REPORTS ====================
     @GetMapping("/reports")
     public String reports(Model model) {
-        // Total revenue (all paid orders)
-        BigDecimal totalRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtBetween(
-                PaymentStatus.PAID,
-                LocalDateTime.of(2000, 1, 1, 0, 0),
-                LocalDateTime.now());
-        if (totalRevenue == null) {
-            totalRevenue = BigDecimal.ZERO;
+        try {
+            // Total revenue (all paid orders)
+            BigDecimal totalRevenue = orderRepository.sumTotalAmountByPaymentStatusAndCreatedAtBetween(
+                    PaymentStatus.PAID,
+                    LocalDateTime.of(2000, 1, 1, 0, 0),
+                    LocalDateTime.now());
+            if (totalRevenue == null) {
+                totalRevenue = BigDecimal.ZERO;
+            }
+
+            // Total orders
+            long totalOrders = orderRepository.count();
+
+            // Average order value
+            BigDecimal avgOrderValue = BigDecimal.ZERO;
+            if (totalOrders > 0 && totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+                avgOrderValue = totalRevenue.divide(BigDecimal.valueOf(totalOrders), 0, java.math.RoundingMode.HALF_UP);
+            }
+
+            // Order status counts
+            long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
+            long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
+            long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
+            long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
+            long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
+
+            // Calculate percentages
+            int pendingPercent = totalOrders > 0 ? (int) (pendingCount * 100 / totalOrders) : 0;
+            int shippingPercent = totalOrders > 0 ? (int) (shippingCount * 100 / totalOrders) : 0;
+            int deliveredPercent = totalOrders > 0 ? (int) (deliveredCount * 100 / totalOrders) : 0;
+            int cancelledPercent = totalOrders > 0 ? (int) (cancelledCount * 100 / totalOrders) : 0;
+
+            // Top products (recent products)
+            List<Product> topProducts = productRepository.findAllByOrderByIdDesc(PageRequest.of(0, 5));
+
+            // Recent orders
+            List<Order> recentOrders = orderRepository.findTop10ByOrderByCreatedAtDesc();
+
+            // Low stock products
+            List<Product> lowStockProducts = productRepository.findByStockLessThanOrderByStockAsc(10);
+
+            model.addAttribute("totalRevenue", totalRevenue);
+            model.addAttribute("totalOrders", totalOrders);
+            model.addAttribute("avgOrderValue", avgOrderValue);
+            model.addAttribute("pendingCount", pendingCount);
+            model.addAttribute("confirmedCount", confirmedCount);
+            model.addAttribute("shippingCount", shippingCount);
+            model.addAttribute("deliveredCount", deliveredCount);
+            model.addAttribute("cancelledCount", cancelledCount);
+            model.addAttribute("pendingPercent", pendingPercent);
+            model.addAttribute("shippingPercent", shippingPercent);
+            model.addAttribute("deliveredPercent", deliveredPercent);
+            model.addAttribute("cancelledPercent", cancelledPercent);
+            model.addAttribute("topProducts", topProducts);
+            model.addAttribute("recentOrders", recentOrders);
+            model.addAttribute("lowStockProducts", lowStockProducts);
+        } catch (Exception e) {
+            // Fallback data if there's an error
+            model.addAttribute("totalRevenue", BigDecimal.ZERO);
+            model.addAttribute("totalOrders", 0L);
+            model.addAttribute("avgOrderValue", BigDecimal.ZERO);
+            model.addAttribute("pendingCount", 0L);
+            model.addAttribute("confirmedCount", 0L);
+            model.addAttribute("shippingCount", 0L);
+            model.addAttribute("deliveredCount", 0L);
+            model.addAttribute("cancelledCount", 0L);
+            model.addAttribute("pendingPercent", 0);
+            model.addAttribute("shippingPercent", 0);
+            model.addAttribute("deliveredPercent", 0);
+            model.addAttribute("cancelledPercent", 0);
+            model.addAttribute("topProducts", java.util.Collections.emptyList());
+            model.addAttribute("recentOrders", java.util.Collections.emptyList());
+            model.addAttribute("lowStockProducts", java.util.Collections.emptyList());
+            model.addAttribute("error", "Lỗi tải dữ liệu: " + e.getMessage());
         }
-
-        // Total orders
-        long totalOrders = orderRepository.count();
-
-        // Average order value
-        BigDecimal avgOrderValue = BigDecimal.ZERO;
-        if (totalOrders > 0 && totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
-            avgOrderValue = totalRevenue.divide(BigDecimal.valueOf(totalOrders), 0, java.math.RoundingMode.HALF_UP);
-        }
-
-        // Order status counts
-        long pendingCount = orderRepository.countByStatus(OrderStatus.PENDING);
-        long confirmedCount = orderRepository.countByStatus(OrderStatus.CONFIRMED);
-        long shippingCount = orderRepository.countByStatus(OrderStatus.SHIPPING);
-        long deliveredCount = orderRepository.countByStatus(OrderStatus.COMPLETED);
-        long cancelledCount = orderRepository.countByStatus(OrderStatus.CANCELLED);
-
-        // Calculate percentages
-        int pendingPercent = totalOrders > 0 ? (int) (pendingCount * 100 / totalOrders) : 0;
-        int shippingPercent = totalOrders > 0 ? (int) (shippingCount * 100 / totalOrders) : 0;
-        int deliveredPercent = totalOrders > 0 ? (int) (deliveredCount * 100 / totalOrders) : 0;
-        int cancelledPercent = totalOrders > 0 ? (int) (cancelledCount * 100 / totalOrders) : 0;
-
-        // Top products (recent products)
-        List<Product> topProducts = productRepository.findAllByOrderByIdDesc(PageRequest.of(0, 5));
-
-        // Recent orders
-        List<Order> recentOrders = orderRepository.findTop10ByOrderByCreatedAtDesc();
-
-        // Low stock products
-        List<Product> lowStockProducts = productRepository.findByStockLessThanOrderByStockAsc(10);
-
-        model.addAttribute("totalRevenue", totalRevenue);
-        model.addAttribute("totalOrders", totalOrders);
-        model.addAttribute("avgOrderValue", avgOrderValue);
-        model.addAttribute("pendingCount", pendingCount);
-        model.addAttribute("confirmedCount", confirmedCount);
-        model.addAttribute("shippingCount", shippingCount);
-        model.addAttribute("deliveredCount", deliveredCount);
-        model.addAttribute("cancelledCount", cancelledCount);
-        model.addAttribute("pendingPercent", pendingPercent);
-        model.addAttribute("shippingPercent", shippingPercent);
-        model.addAttribute("deliveredPercent", deliveredPercent);
-        model.addAttribute("cancelledPercent", cancelledPercent);
-        model.addAttribute("topProducts", topProducts);
-        model.addAttribute("recentOrders", recentOrders);
-        model.addAttribute("lowStockProducts", lowStockProducts);
         model.addAttribute("activePage", "reports");
         return "admin/reports";
     }
